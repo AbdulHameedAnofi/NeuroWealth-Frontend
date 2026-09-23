@@ -520,6 +520,7 @@ export function StrategySelector() {
       signal: controller.signal,
     })
       .then((data) => {
+        if (controller.signal.aborted) return;
         dispatch({ type: "LOAD_SUCCESS", strategy: data.strategy });
       })
       .catch((err: unknown) => {

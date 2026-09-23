@@ -79,4 +79,25 @@ describe("useNotificationPreferences", () => {
       expected,
     );
   });
+
+  it("syncs when another tab updates the same storage key", () => {
+    const { result } = renderHook(() => useNotificationPreferences());
+
+    const synced = {
+      ...DEFAULT_PREFERENCES,
+      channels: { ...DEFAULT_PREFERENCES.channels, email: false, push: true },
+      categories: { ...DEFAULT_PREFERENCES.categories, promotions: true },
+    };
+
+    act(() => {
+      localStorage.setItem(NOTIFICATION_PREFERENCES_STORAGE_KEY, JSON.stringify(synced));
+      const event = new window.StorageEvent("storage", {
+        key: NOTIFICATION_PREFERENCES_STORAGE_KEY,
+        newValue: JSON.stringify(synced),
+      });
+      window.dispatchEvent(event);
+    });
+
+    assert.deepEqual(result.current.preferences, synced);
+  });
 });

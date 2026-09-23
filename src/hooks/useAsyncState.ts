@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useReducer } from "react";
+import { useCallback, useReducer, useRef } from "react";
 import { ServiceError, type ServiceErrorCode } from "@/lib/mock-services";
 
 // ─── State shape ──────────────────────────────────────────────────────────────
@@ -66,13 +66,17 @@ export function useAsyncState<T>() {
     data: null,
     error: null,
   });
+  const requestIdRef = useRef(0);
 
   const run = useCallback(async (fn: () => Promise<T>) => {
+    const requestId = ++requestIdRef.current;
     dispatch({ type: "LOADING" });
     try {
       const result = await fn();
+      if (requestId !== requestIdRef.current) return;
       dispatch({ type: "SUCCESS", payload: result });
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       const error: AsyncError =
         err instanceof ServiceError
           ? { message: err.message, code: err.code, retryable: err.retryable }
@@ -85,7 +89,10 @@ export function useAsyncState<T>() {
     }
   }, []);
 
-  const reset = useCallback(() => dispatch({ type: "RESET" }), []);
+  const reset = useCallback(() => {
+    requestIdRef.current += 1;
+    dispatch({ type: "RESET" });
+  }, []);
 
   return { state, run, reset };
 }
