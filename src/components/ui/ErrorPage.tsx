@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef } from "react";
+import React, { ReactNode, useEffect, useRef } from "react";
 import { MAIN_CONTENT_LANDMARK_ID } from "@/lib/app-landmarks";
 import { Button } from "./Button";
 
@@ -11,6 +11,15 @@ interface ErrorPageProps {
   icon?: ReactNode;
   primaryAction: { label: string; href: string };
   secondaryAction?: { label: string; href?: string; onClick?: () => void };
+  /**
+   * Set to false when ErrorPage renders inside a layout (e.g. DashboardShell)
+   * that already owns the MAIN_CONTENT_LANDMARK_ID main-content landmark, so
+   * this component doesn't create a second element with the same id. Focus
+   * management is unaffected - the wrapper is still focused on mount either
+   * way. Defaults to true for standalone error/not-found routes that have no
+   * persistent layout landmark of their own.
+   */
+  ownsLandmark?: boolean;
 }
 
 /**
@@ -25,6 +34,7 @@ export function ErrorPage({
   icon,
   primaryAction,
   secondaryAction,
+  ownsLandmark = true,
 }: ErrorPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -33,9 +43,9 @@ export function ErrorPage({
   }, []);
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      id={MAIN_CONTENT_LANDMARK_ID}
+      id={ownsLandmark ? MAIN_CONTENT_LANDMARK_ID : undefined}
       tabIndex={-1}
       className="min-h-screen flex items-center justify-center bg-dark-900 px-4"
     >

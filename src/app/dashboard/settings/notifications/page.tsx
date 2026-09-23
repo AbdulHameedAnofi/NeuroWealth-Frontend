@@ -13,8 +13,8 @@ import {
 export const dynamic = "force-dynamic";
 import { Button, Card, InlineBanner } from "@/components/ui";
 import { SettingsSectionSkeleton } from "@/components/ui/Skeleton";
-import { Switch } from "@/components/ui/Switch";
 import { useSettingsForm } from "@/hooks/useSettingsForm";
+import { PreferenceToggle } from "./PreferenceToggle";
 
 const STORAGE_KEY = STORAGE_KEYS.NOTIFICATIONS;
 
@@ -31,41 +31,6 @@ type TogglePath =
   | ["emailDigest", "weeklyDigest"]
   | ["categories", "promotions"]
   | ["emailDigest", "securityAlerts"];
-
-function PreferenceToggle({
-  id,
-  title,
-  description,
-  checked,
-  disabled,
-  onChange,
-}: {
-  id: string;
-  title: string;
-  description: string;
-  checked: boolean;
-  disabled: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <div
-      className={`flex items-start justify-between gap-4 rounded-xl border border-slate-700/50 bg-slate-950/35 p-4 transition ${
-        disabled ? "opacity-65" : "hover:border-slate-600"
-      }`}
-    >
-      <div>
-        <p className="text-sm font-semibold text-slate-100">{title}</p>
-        <p className="mt-1 text-sm leading-6 text-slate-400">{description}</p>
-      </div>
-      <Switch
-        id={id}
-        checked={checked}
-        disabled={disabled}
-        onChange={() => onChange()}
-      />
-    </div>
-  );
-}
 
 export default function NotificationsSettingsPage() {
   const { pushToast } = useToast();

@@ -4,11 +4,24 @@ interface SwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label?: string;
+  /**
+   * Keep `label` in the accessibility tree (as the switch's accessible name)
+   * without rendering it visibly. Used where a visible title already exists
+   * elsewhere in the layout, so the label text isn't shown twice.
+   */
+  hideLabel?: boolean;
   disabled?: boolean;
   id?: string;
 }
 
-export function Switch({ checked, onChange, label, disabled = false, id }: SwitchProps) {
+export function Switch({
+  checked,
+  onChange,
+  label,
+  hideLabel = false,
+  disabled = false,
+  id,
+}: SwitchProps) {
   return (
     <label
       htmlFor={id}
@@ -17,7 +30,13 @@ export function Switch({ checked, onChange, label, disabled = false, id }: Switc
       }`}
     >
       {label && (
-        <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+        <span
+          className={
+            hideLabel
+              ? "sr-only"
+              : "text-sm font-medium text-slate-300 group-hover:text-white transition-colors"
+          }
+        >
           {label}
         </span>
       )}
