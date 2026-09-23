@@ -14,6 +14,7 @@ export default function DashboardNotFound() {
       icon={<FileQuestion size={32} />}
       primaryAction={{ label: "Back to dashboard", href: "/dashboard" }}
       secondaryAction={{ label: "Go to portfolio", href: "/dashboard/portfolio" }}
+      ownsLandmark={false}
     />
   );
 }
