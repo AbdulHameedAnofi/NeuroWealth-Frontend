@@ -66,37 +66,31 @@ export function useAsyncState<T>() {
     data: null,
     error: null,
   });
+  const requestIdRef = useRef(0);
 
-  const callIdRef = useRef(0);
-
-  const run = useCallback(async (fn: () => Promise<T>): Promise<T | undefined> => {
-    const callId = ++callIdRef.current;
+  const run = useCallback(async (fn: () => Promise<T>) => {
+    const requestId = ++requestIdRef.current;
     dispatch({ type: "LOADING" });
     try {
       const result = await fn();
-      if (callId === callIdRef.current) {
-        dispatch({ type: "SUCCESS", payload: result });
-        return result;
-      }
-      return undefined;
+      if (requestId !== requestIdRef.current) return;
+      dispatch({ type: "SUCCESS", payload: result });
     } catch (err) {
-      if (callId === callIdRef.current) {
-        const error: AsyncError =
-          err instanceof ServiceError
-            ? { message: err.message, code: err.code, retryable: err.retryable }
-            : {
-                message: err instanceof Error ? err.message : "An unexpected error occurred.",
-                code: "UNKNOWN",
-                retryable: true,
-              };
-        dispatch({ type: "ERROR", error });
-      }
-      return undefined;
+      if (requestId !== requestIdRef.current) return;
+      const error: AsyncError =
+        err instanceof ServiceError
+          ? { message: err.message, code: err.code, retryable: err.retryable }
+          : {
+              message: err instanceof Error ? err.message : "An unexpected error occurred.",
+              code: "UNKNOWN",
+              retryable: true,
+            };
+      dispatch({ type: "ERROR", error });
     }
   }, []);
 
   const reset = useCallback(() => {
-    callIdRef.current++;
+    requestIdRef.current += 1;
     dispatch({ type: "RESET" });
   }, []);
 

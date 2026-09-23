@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 import { SettingsSectionSkeleton } from "@/components/ui/Skeleton";
-import { ThemeMode } from "@/contexts/ThemeProvider";
+import { ThemeMode, useTheme } from "@/contexts/ThemeProvider";
 import { useI18n } from "@/contexts/I18nContext";
 import { LOCALE_OPTIONS as LOCALES } from "@/lib/locale-options";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -57,6 +57,7 @@ const DEFAULT: PreferencesData = {
 
 export default function PreferencesPage() {
   const { messages } = useI18n();
+  const { setTheme: setAppTheme } = useTheme();
   const t = messages.settings.preferences;
   const {
     saved,
@@ -72,7 +73,15 @@ export default function PreferencesPage() {
     handleCancel,
   } = useSettingsForm<PreferencesData>(STORAGE_KEY, DEFAULT, {
     auditSection: "preferences",
+    onSaveSuccess: (savedData) => {
+      setAppTheme(savedData.theme);
+    },
   });
+
+  const handleThemeOptionChange = (theme: ThemeMode) => {
+    setDraft({ ...draft, theme });
+    setAppTheme(theme);
+  };
 
   if (pageLoading) {
     return <SettingsSectionSkeleton rows={3} />;
@@ -158,7 +167,7 @@ export default function PreferencesPage() {
               <div className={styles.themeOptions}>
                 <button
                   type="button"
-                  onClick={() => setDraft({ ...draft, theme: "light" })}
+                  onClick={() => handleThemeOptionChange("light")}
                   className={`${styles.themeOption} ${draft.theme === "light" ? styles.themeOptionActive : ""}`}
                   aria-pressed={draft.theme === "light"}
                 >
@@ -167,7 +176,7 @@ export default function PreferencesPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDraft({ ...draft, theme: "dark" })}
+                  onClick={() => handleThemeOptionChange("dark")}
                   className={`${styles.themeOption} ${draft.theme === "dark" ? styles.themeOptionActive : ""}`}
                   aria-pressed={draft.theme === "dark"}
                 >
@@ -176,7 +185,7 @@ export default function PreferencesPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDraft({ ...draft, theme: "system" })}
+                  onClick={() => handleThemeOptionChange("system")}
                   className={`${styles.themeOption} ${draft.theme === "system" ? styles.themeOptionActive : ""}`}
                   aria-pressed={draft.theme === "system"}
                 >

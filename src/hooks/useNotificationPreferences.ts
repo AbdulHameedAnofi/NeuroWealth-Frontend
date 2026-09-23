@@ -1,26 +1,33 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { NotificationPreferences, DEFAULT_PREFERENCES } from "@/lib/mock-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useStorageSync } from "@/hooks/useStorageSync";
 
 const NOTIFICATION_PREFERENCES_STORAGE_KEY = STORAGE_KEYS.NOTIFICATIONS;
 
-function readNotificationPreferences(): NotificationPreferences {
+function mergeStoredPreferences(value: unknown): NotificationPreferences {
+  const parsed = typeof value === "object" && value !== null ? (value as Partial<NotificationPreferences>) : {};
+
+  return {
+    ...DEFAULT_PREFERENCES,
+    ...parsed,
+    categories: { ...DEFAULT_PREFERENCES.categories, ...(parsed.categories ?? {}) },
+    channels: { ...DEFAULT_PREFERENCES.channels, ...(parsed.channels ?? {}) },
+    emailDigest: {
+      ...DEFAULT_PREFERENCES.emailDigest,
+      ...(parsed.emailDigest ?? {}),
+    },
+  };
+}
+
+function readStoredPreferences(): NotificationPreferences {
   if (typeof window === "undefined") return DEFAULT_PREFERENCES;
   const stored = localStorage.getItem(NOTIFICATION_PREFERENCES_STORAGE_KEY);
   if (!stored) return DEFAULT_PREFERENCES;
+
   try {
-    const parsed = JSON.parse(stored);
-    // Merge against defaults so pre-migration stored values missing
-    // emailDigest (or any future section) don't crash on access.
-    return {
-      ...DEFAULT_PREFERENCES,
-      ...parsed,
-      categories: { ...DEFAULT_PREFERENCES.categories, ...parsed.categories },
-      channels: { ...DEFAULT_PREFERENCES.channels, ...parsed.channels },
-      emailDigest: { ...DEFAULT_PREFERENCES.emailDigest, ...parsed.emailDigest },
-    };
+    return mergeStoredPreferences(JSON.parse(stored));
   } catch {
-    // Malformed JSON - fallback to defaults and repair corrupted storage
     localStorage.setItem(
       NOTIFICATION_PREFERENCES_STORAGE_KEY,
       JSON.stringify(DEFAULT_PREFERENCES),
@@ -30,8 +37,23 @@ function readNotificationPreferences(): NotificationPreferences {
 }
 
 export function useNotificationPreferences() {
-  const [preferences, setPreferences] = useState<NotificationPreferences>(readNotificationPreferences);
+  const [preferences, setPreferences] = useState<NotificationPreferences>(readStoredPreferences);
   const [loading] = useState(false);
+
+  const syncPreferences = useCallback((nextValue: string | null) => {
+    if (nextValue == null) {
+      setPreferences(DEFAULT_PREFERENCES);
+      return;
+    }
+
+    try {
+      setPreferences(mergeStoredPreferences(JSON.parse(nextValue)));
+    } catch {
+      setPreferences(DEFAULT_PREFERENCES);
+    }
+  }, []);
+
+  useStorageSync(NOTIFICATION_PREFERENCES_STORAGE_KEY, syncPreferences);
 
   useEffect(() => {
     const handleSync = () => {
@@ -49,7 +71,7 @@ export function useNotificationPreferences() {
   const updatePreference = (
     section: "categories" | "channels" | "emailDigest",
     key: string,
-    value: boolean
+    value: boolean,
   ) => {
     setPreferences((current) => {
       const updated = {

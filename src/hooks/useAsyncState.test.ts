@@ -143,4 +143,38 @@ describe("useAsyncState error classification in run()", () => {
       retryable: true,
     });
   });
+
+  it("ignores stale results from older runs", async () => {
+    const { result } = renderHook(() => useAsyncState<number>());
+
+    let resolveFirst!: (value: number) => void;
+    let resolveSecond!: (value: number) => void;
+
+    const first = new Promise<number>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const second = new Promise<number>((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    act(() => {
+      void result.current.run(() => first);
+      void result.current.run(() => second);
+    });
+
+    await act(async () => {
+      resolveSecond(200);
+      await second;
+    });
+
+    assert.equal(result.current.state.status, "success");
+    assert.equal(result.current.state.data, 200);
+
+    await act(async () => {
+      resolveFirst(100);
+      await first;
+    });
+
+    assert.equal(result.current.state.data, 200);
+  });
 });

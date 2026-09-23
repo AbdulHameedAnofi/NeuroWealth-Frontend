@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { mockAuditService } from "@/lib/mock-audit";
 import { logger } from "@/lib/logger";
+import { useStorageSync } from "@/hooks/useStorageSync";
 
 type SaveStatus = "idle" | "success" | "error";
 
@@ -27,26 +28,39 @@ export function useSettingsForm<T>(
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [pageLoading, setPageLoading] = useState(true);
 
+  const syncFromStorage = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored == null) {
+        setSaved(defaultValue);
+        setDraft(defaultValue);
+        return;
+      }
+
+      const data = JSON.parse(stored) as T;
+      setSaved(data);
+      setDraft(data);
+    } catch (error) {
+      logger.error("Failed to load saved settings from localStorage", {
+        storageKey,
+        error,
+      });
+      setSaved(defaultValue);
+      setDraft(defaultValue);
+    }
+  }, [defaultValue, storageKey]);
+
+  useStorageSync(storageKey, () => {
+    syncFromStorage();
+  });
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const data = JSON.parse(stored) as T;
-          setSaved(data);
-          setDraft(data);
-        }
-      } catch (error) {
-        logger.error("Failed to load saved settings from localStorage", {
-          storageKey,
-          error,
-        });
-      }
+      syncFromStorage();
       setPageLoading(false);
     }, options.loadDelayMs ?? 600);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey]);
+  }, [options.loadDelayMs, syncFromStorage]);
 
   useEffect(() => {
     const handleSync = (e?: Event) => {
