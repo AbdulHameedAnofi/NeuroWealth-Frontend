@@ -167,7 +167,7 @@ describe("useTransactionForm", () => {
 
       // Should return to defaults
       const initial = result.current.formValues;
-      assert.equal(initial.amount, "" || initial.amount === undefined || typeof initial.amount === "number");
+      assert.ok(initial.amount === "" || initial.amount === undefined || typeof initial.amount === "number");
       assert.deepEqual(result.current.fieldErrors, {});
     });
   });

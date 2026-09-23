@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useReducer } from "react";
+import { useCallback, useReducer, useRef } from "react";
 import { ServiceError, type ServiceErrorCode } from "@/lib/mock-services";
 
 // ─── State shape ──────────────────────────────────────────────────────────────
@@ -67,25 +67,38 @@ export function useAsyncState<T>() {
     error: null,
   });
 
-  const run = useCallback(async (fn: () => Promise<T>) => {
+  const callIdRef = useRef(0);
+
+  const run = useCallback(async (fn: () => Promise<T>): Promise<T | undefined> => {
+    const callId = ++callIdRef.current;
     dispatch({ type: "LOADING" });
     try {
       const result = await fn();
-      dispatch({ type: "SUCCESS", payload: result });
+      if (callId === callIdRef.current) {
+        dispatch({ type: "SUCCESS", payload: result });
+        return result;
+      }
+      return undefined;
     } catch (err) {
-      const error: AsyncError =
-        err instanceof ServiceError
-          ? { message: err.message, code: err.code, retryable: err.retryable }
-          : {
-              message: err instanceof Error ? err.message : "An unexpected error occurred.",
-              code: "UNKNOWN",
-              retryable: true,
-            };
-      dispatch({ type: "ERROR", error });
+      if (callId === callIdRef.current) {
+        const error: AsyncError =
+          err instanceof ServiceError
+            ? { message: err.message, code: err.code, retryable: err.retryable }
+            : {
+                message: err instanceof Error ? err.message : "An unexpected error occurred.",
+                code: "UNKNOWN",
+                retryable: true,
+              };
+        dispatch({ type: "ERROR", error });
+      }
+      return undefined;
     }
   }, []);
 
-  const reset = useCallback(() => dispatch({ type: "RESET" }), []);
+  const reset = useCallback(() => {
+    callIdRef.current++;
+    dispatch({ type: "RESET" });
+  }, []);
 
   return { state, run, reset };
 }

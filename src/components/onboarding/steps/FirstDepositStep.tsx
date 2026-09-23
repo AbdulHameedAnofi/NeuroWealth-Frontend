@@ -116,6 +116,7 @@ export default function FirstDepositStep({ onNext, onSkip, onBack }: FirstDeposi
               key={asset.id}
               role="button"
               tabIndex={0}
+              aria-pressed={selectedAsset === asset.id}
               className={`
                 border-2 rounded-xl p-4 cursor-pointer transition-all duration-200
                 ${selectedAsset === asset.id
