@@ -236,6 +236,11 @@ export default function StrategyList() {
   const start = (page - 1) * itemsPerPage;
   const items = filtered.slice(start, start + itemsPerPage);
 
+  const handleFilterChange = (filters: string[]) => {
+    setSelectedFilters(filters);
+    setPage(1);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Header */}
@@ -258,7 +263,7 @@ export default function StrategyList() {
       <FilterChips
         options={filterOptions}
         selected={selectedFilters}
-        onChange={setSelectedFilters}
+        onChange={handleFilterChange}
       />
 
       {/* Grid */}

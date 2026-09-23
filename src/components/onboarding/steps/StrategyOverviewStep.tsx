@@ -99,6 +99,7 @@ export default function StrategyOverviewStep({ onNext, onSkip, onBack }: Strateg
             onClick={() => setSelectedStrategy(strategy.id)}
             role="button"
             tabIndex={0}
+            aria-pressed={selectedStrategy === strategy.id}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
