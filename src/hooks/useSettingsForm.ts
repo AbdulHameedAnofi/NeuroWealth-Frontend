@@ -48,6 +48,36 @@ export function useSettingsForm<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
+  useEffect(() => {
+    const handleSync = (e?: Event) => {
+      if (e instanceof StorageEvent && e.key && e.key !== storageKey) {
+        return;
+      }
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const data = JSON.parse(stored) as T;
+          setSaved(data);
+          if (!editing) {
+            setDraft(data);
+          }
+        }
+      } catch (error) {
+        logger.error("Failed to sync storage change in useSettingsForm", {
+          storageKey,
+          error,
+        });
+      }
+    };
+
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("notification-preferences-updated", handleSync);
+    return () => {
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("notification-preferences-updated", handleSync);
+    };
+  }, [storageKey, editing]);
+
   const isDirty = JSON.stringify(draft) !== JSON.stringify(saved);
 
   const handleSave = async () => {
@@ -58,6 +88,10 @@ export function useSettingsForm<T>(
       options.validate?.(draft);
       localStorage.setItem(storageKey, JSON.stringify(draft));
       setSaved(draft);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event("notification-preferences-updated"));
+      }
       setStatus("success");
       setEditing(false);
       mockAuditService.logEvent("settings_change", {

@@ -71,6 +71,32 @@ describe("useAsyncState reducer", () => {
 
     assert.deepEqual(result.current.state, { status: "idle", data: null, error: null });
   });
+
+  it("ignores response from superseded run calls", async () => {
+    const { result } = renderHook(() => useAsyncState<string>());
+
+    let resolveFirst!: (v: string) => void;
+    const firstPromise = new Promise<string>((resolve) => {
+      resolveFirst = resolve;
+    });
+
+    let run1!: Promise<string | undefined>;
+    let run2!: Promise<string | undefined>;
+
+    act(() => {
+      run1 = result.current.run(() => firstPromise);
+      run2 = result.current.run(() => Promise.resolve("second"));
+    });
+
+    await act(async () => {
+      resolveFirst("first");
+      await run1;
+      await run2;
+    });
+
+    assert.equal(result.current.state.status, "success");
+    assert.equal(result.current.state.data, "second");
+  });
 });
 
 describe("useAsyncState error classification in run()", () => {
