@@ -64,8 +64,13 @@ export function useNotificationPreferences() {
         JSON.stringify(updated),
       );
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new Event("notification-preferences-updated"));
+        try {
+          const EventCtor = window.Event || Event;
+          window.dispatchEvent(new EventCtor("storage"));
+          window.dispatchEvent(new EventCtor("notification-preferences-updated"));
+        } catch {
+          // ignore dispatch issues in non-standard test environments
+        }
       }
       return updated;
     });

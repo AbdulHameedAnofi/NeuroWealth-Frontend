@@ -20,7 +20,7 @@ describe("useAsyncState reducer", () => {
       resolveFn = resolve;
     });
 
-    let runPromise!: Promise<void>;
+    let runPromise!: Promise<unknown>;
     act(() => {
       runPromise = result.current.run(() => pending);
     });
