@@ -146,7 +146,7 @@ export function CommandPaletteDialog({ onClose }: CommandPaletteDialogProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Command Palette"
-        className="relative w-full max-w-full overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none motion-reduce:duration-0 motion-reduce:transform-none sm:max-w-[640px] sm:rounded-xl"
+        className="relative w-full max-w-full overflow-hidden border border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none motion-reduce:duration-0 motion-reduce:transform-none sm:max-w-[640px] sm:rounded-xl"
       >
         <div className="flex min-h-[56px] items-center border-b border-slate-800 px-4">
           <Search className="mr-3 h-5 w-5 shrink-0 text-slate-400" />
