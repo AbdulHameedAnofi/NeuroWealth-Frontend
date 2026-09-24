@@ -51,7 +51,9 @@ export function useSettingsForm<T>(
   }, [defaultValue, storageKey]);
 
   useStorageSync(storageKey, () => {
-    syncFromStorage();
+    if (!editing) {
+      syncFromStorage();
+    }
   });
 
   useEffect(() => {

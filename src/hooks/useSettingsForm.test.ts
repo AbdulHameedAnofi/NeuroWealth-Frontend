@@ -144,4 +144,41 @@ describe("useSettingsForm", () => {
     assert.equal(result.current.status, "error");
     assert.equal(localStorage.getItem("test-key"), null);
   });
+
+  it("useStorageSync does not overwrite draft while editing (#851)", async () => {
+    localStorage.setItem("test-key", JSON.stringify({ enabled: false }));
+
+    const { result } = renderHook(() =>
+      useSettingsForm<Draft>("test-key", { enabled: false }, { auditSection: "test", loadDelayMs: 0 }),
+    );
+
+    await act(async () => {
+      await flush(0);
+    });
+
+    act(() => {
+      result.current.setEditing(true);
+      result.current.setDraft({ enabled: true });
+    });
+
+    assert.equal(result.current.editing, true);
+    assert.deepEqual(result.current.draft, { enabled: true });
+
+    // Simulate another tab writing a new value to the same key
+    localStorage.setItem("test-key", JSON.stringify({ enabled: false }));
+
+    await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "test-key",
+          newValue: JSON.stringify({ enabled: false }),
+        }),
+      );
+      await flush(0);
+    });
+
+    // The in-progress draft must not be clobbered while the user is editing
+    assert.deepEqual(result.current.draft, { enabled: true });
+    assert.equal(result.current.editing, true);
+  });
 });
