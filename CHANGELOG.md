@@ -34,7 +34,7 @@ Versions are tagged in GitHub Releases and linked from this file.
 - CI now uses the shared `validate:config` command, documents and runs Playwright in the intended order, and removes duplicate E2E execution (#763, #764, #845, #891)
 - Replaced stale documentation and demo-seed guidance, removed `yarn` from runtime dependencies, and reconciled environment, security, and issue-template references (#826, #827, #839, #893, #894)
 - StrategyList, TransactionList, and strategy confirmation flows now use shared badges, theme-aware text, and the shared modal stacking/focus patterns (#828, #829, #843)
-- Standardized API error presentation and failure logging across portfolio, settings, and transaction flows; malformed cookie-consent state is rejected safely (#833, #834, #840)
+- Standardized API error presentation and failure logging across portfolio, settings, and transaction flows; malformed cookie-consent state is rejected safely (#834, #840)
 - Added shared cross-tab storage synchronization and stale-response protection for settings and async state (#846, #847)
 - Upgraded Next.js and `eslint-config-next` to 14.2.35 to address the middleware authentication bypass advisory (#896)
 - Added a light-mode surface to the command palette while preserving the dark-mode presentation (#885)
@@ -77,7 +77,7 @@ Versions are tagged in GitHub Releases and linked from this file.
 
 ### Documented
 - Folder structure documentation in `README.md` covering all top-level `src/` directories (closes #428)
-- Release notes process confirmed as manual Keep-a-Changelog; no Changesets automation required at this stage (closes #427)
+- Release notes process confirmed as manual Keep a Changelog (closes #427)
 - Authenticated dashboard shell verified: protected route, responsive layout (sidebar + top header / mobile bottom nav), skeleton loading states, and error boundary all in place (closes #429)
 - Error pages verified: 401, 403, 404, and 500 pages implemented with recovery actions; dev-only mock triggers available at `/dashboard/dev-errors` (closes #449)
 - CI and Playwright contribution steps, provider tree, route folders, security reporting, and public environment variables were reconciled (#708, #709, #710, #711, #763, #764, #839, #845, #893)
