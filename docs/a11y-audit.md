@@ -95,6 +95,14 @@ All skeleton presets carry `aria-hidden="true"` and `role="presentation"` so scr
 - `aria-live="polite"` on success status messages (`role="status"` elements).
 - `aria-busy` set on inputs during async validation (email uniqueness check).
 
+### Chart accessibility (`src/components/charts/BaseChart.tsx`)
+
+`BaseChart` wraps all Recharts chart containers with:
+- `role="img"`
+- `aria-label` describing the chart and data for assistive technology
+
+All chart wrappers (`AreaChartWrapper`, `BarChartWrapper`, `DonutChartWrapper`, `LineChartWrapper`) pass accessible `aria-label` strings.
+
 ---
 
 ## Keyboard Navigation — Tested Flows
@@ -117,9 +125,14 @@ All skeleton presets carry `aria-hidden="true"` and `role="presentation"` so scr
 | ID | Description | Priority |
 |---|---|---|
 | A11Y-04 | Add `<title>` to SVG icons that carry semantic meaning (wallet icon in onboarding) | Low |
-| A11Y-05 | Recharts charts need `role="img"` + `aria-label` describing the data for non-visual access | Medium |
 | A11Y-06 | Consider `aria-live="polite"` on the sandbox scenario switcher to announce state changes | Low |
 | A11Y-07 | Add `autocomplete` attributes to sign-in/sign-up fields (e.g. `autocomplete="email"`) | Low |
+
+### Resolved Recommendations
+
+| ID | Description | Resolution |
+|---|---|---|
+| A11Y-05 | Recharts charts need `role="img"` + `aria-label` describing the data for non-visual access | ✅ Resolved — `BaseChart.tsx` provides `role="img"` and `aria-label`; all chart wrappers pass accessible labels. |
 
 ---
 
