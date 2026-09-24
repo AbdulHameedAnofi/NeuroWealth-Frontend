@@ -71,7 +71,7 @@ because analyzer builds are slower than the normal test/lint/build pipeline.
 src/
 ├── app/                   # Next.js App Router — routes and layouts
 │   ├── (auth)/            # Signup flow route group only
-│   ├── (errors)/          # Standalone error pages (401 unauthorized, 403 forbidden)
+│   ├── (errors)/          # Standalone error pages (401 unauthorized, 403 forbidden, 500 server-error)
 │   ├── api/               # Route handlers for app APIs and mock backends
 │   ├── dashboard/         # Protected dashboard shell and sub-routes
 │   │   ├── dev-errors/    # Dev-only error trigger routes (hidden in production)
