@@ -120,10 +120,13 @@ const RISK_BADGE_VARIANT: Record<
   high: "error",
 };
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  active: { bg: "rgba(59,130,246,0.12)", color: "#3b82f6" },
-  paused: { bg: "rgba(156,163,175,0.12)", color: "#9ca3af" },
-  archived: { bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
+const STATUS_VARIANT: Record<
+  Strategy["status"],
+  "success" | "warning" | "default"
+> = {
+  active: "success",
+  paused: "warning",
+  archived: "default",
 };
 
 export default function StrategyList() {
@@ -308,20 +311,9 @@ export default function StrategyList() {
                   {strategy.name}
                 </h3>
               </div>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                  borderRadius: 4,
-                  padding: "2px 6px",
-                  background: STATUS_COLORS[strategy.status].bg,
-                  color: STATUS_COLORS[strategy.status].color,
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <Badge variant={STATUS_VARIANT[strategy.status]} size="sm">
                 {strategy.status}
-              </span>
+              </Badge>
             </div>
 
             {/* Meta */}

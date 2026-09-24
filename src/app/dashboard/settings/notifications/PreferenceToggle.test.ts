@@ -32,7 +32,7 @@ test("PreferenceToggle — the switch has the title as its accessible name", () 
 
 test("PreferenceToggle — clicking the title text toggles the switch", () => {
   let toggled = 0;
-  // The title text appears twice: once visibly in the outer <label>, and
+  // The title text appears twice: once visibly in the clickable <div>, and
   // once as Switch's own sr-only accessible-name span. getAllByText picks
   // both up; the first match is the visible title <p>.
   const { getAllByText, getByRole } = render(
