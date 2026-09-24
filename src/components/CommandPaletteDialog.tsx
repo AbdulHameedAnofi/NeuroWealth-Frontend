@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { commandPaletteRoutes } from "@/lib/routeMetadata";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 type Command = {
   id: string;
@@ -29,6 +30,9 @@ export function CommandPaletteDialog({ onClose }: CommandPaletteDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const liveRegionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Always mounted open (the parent owns open/close), so the trap is always active.
+  useFocusTrap(containerRef, true);
 
   const mockActions = [
     {
@@ -138,6 +142,7 @@ export function CommandPaletteDialog({ onClose }: CommandPaletteDialogProps) {
         aria-hidden="true"
       />
       <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-label="Command Palette"

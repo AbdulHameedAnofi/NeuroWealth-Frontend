@@ -240,12 +240,17 @@ test("CommandPaletteDialog — integration: narrow filter to single result, then
   assert.equal(selectedIndex, 0);
 });
 
-// ── Stacking (#882) ─────────────────────────────────
+// ── Focus trap and stacking (#881, #882) ─────────────────────────────────
 
 const dialogSource = fs.readFileSync(
   path.join(process.cwd(), "src/components/CommandPaletteDialog.tsx"),
   "utf8",
 );
+
+test("CommandPaletteDialog — wires useFocusTrap onto the dialog container", () => {
+  assert.match(dialogSource, /useFocusTrap\(containerRef,\s*true\);/);
+  assert.match(dialogSource, /ref=\{containerRef\}\s*role="dialog"/);
+});
 
 test("CommandPaletteDialog — uses the shared modal z-index tier, not a hardcoded value", () => {
   assert.match(dialogSource, /\bz-modal\b/);
