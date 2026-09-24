@@ -2,12 +2,12 @@
 
 ## Snapshot
 
-- Reviewed on: `2026-07-26`
+- Reviewed on: `2026-09-24`
 - Command: `yarn audit --json` (canonical lockfile is `yarn.lock`; `npm audit --json` was attempted but timed out against the registry in this environment — same installed tree)
-- Summary (unique advisories): `2 critical`, `41 high`, `47 moderate`, `7 low` (97 total)
-- Yarn instance rollup across the tree: `3 critical`, `98 high`, `104 moderate`, `12 low`
+- Summary (unique advisories): `4 critical`, `54 high`, `51 moderate`, `7 low` (116 total)
+- Yarn instance rollup across the tree: `5 critical`, `123 high`, `111 moderate`, `12 low` (251 total)
 - Direct-dependency risk is concentrated in:
-  - `next@14.2.3` (critical middleware authorization bypass; several high DoS/SSRF advisories)
+  - `next@14.2.3` (critical middleware authorization bypass GHSA-f82v-jwr5-mffw, image optimization RCE GHSA-2xp9-vwfh-vxw4, and Windows RCE GHSA-p293-qw3h-jr36; several high DoS/SSRF advisories)
   - `@creit.tech/stellar-wallets-kit@1.9.5` and its transitive wallet tree (`@trezor/*`, `@hot-wallet/sdk`, `@solana/web3.js`, `axios`, `protobufjs`, `ws`)
 - Prior `secp256k1` critical via `@near-js/crypto` is no longer reported as critical; residual crypto risk in that chain is `elliptic` at `low`.
 
@@ -25,7 +25,7 @@
 
 | Package path | Severity | Decision | Reason | Next action |
 | --- | --- | --- | --- | --- |
-| `next@14.2.3` (direct) | `critical` (+ multiple `high`) | `must-fix` | GHSA-f82v-jwr5-mffw (middleware authorization bypass) is patched in `>=14.2.25`; additional high DoS/SSRF advisories require later 14.2.x / 15.x lines. Framework auth surface is reachable in production. | Open a dedicated Next upgrade PR (pin to a patched 14.2.x or agreed 15.x). Re-run audit, typecheck, test, build, and smoke `/login` + middleware-protected routes after. |
+| `next@14.2.3` (direct) | `critical` (+ multiple `high`) | `must-fix` | Multiple critical advisories including GHSA-f82v-jwr5-mffw (middleware authorization bypass), GHSA-2xp9-vwfh-vxw4 (image optimization RCE), and GHSA-p293-qw3h-jr36, plus multiple high DoS/SSRF advisories. Framework auth and image surfaces are reachable in production. | Open/land dedicated Next upgrade PR (pin to a patched 14.2.x or agreed 15.x). Once landed, update this policy to reflect patched status. Re-run audit, typecheck, test, build, and smoke `/login` + middleware-protected routes after. |
 | `protobufjs` via `@trezor/protobuf` → `@trezor/connect` → `@creit.tech/stellar-wallets-kit` | `critical` | `accepted temporary risk` | Arbitrary code execution advisory (GHSA-xq3m-2v4x-88gg). Trezor hardware integration is not wired into the current Stellar connect/sign flow, so the critical path is not reachable in the shipped UI. | Keep wallet scope limited to Freighter/Albedo/Lobstr. Track upstream `@creit.tech` / `@trezor/*` for a patched transitive tree. Re-evaluate within **7 days** or on next wallet SDK update. |
 | `@creit.tech/stellar-wallets-kit@1.9.5` (direct) | `high` (rolled up transitive) | `must-fix` (upgrade path) | Direct dependency still pulls `@trezor/*`, `@hot-wallet/sdk`, and Solana tooling. Bumped from the prior `1.8.x` snapshot to `1.9.5`, but the transitive critical/high surface remains. | Prefer upstream kit bump over forced overrides. Run wallet connect / deposit / withdrawal smoke tests on each kit release. |
 | `axios` via `@trezor/blockchain-link` → `@creit.tech/stellar-wallets-kit` | `high` | `accepted temporary risk` | Multiple prototype-pollution / header / proxy advisories. Path sits under unused Trezor blockchain-link code for the current Stellar demo scope. | Resolved automatically if the kit drops or patches the Trezor tree. Recheck on next wallet SDK bump. |
