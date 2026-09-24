@@ -43,3 +43,47 @@ test("API route handlers call requireAuth or are explicitly allowlisted", async 
     );
   }
 });
+
+// ── requireSameOrigin CSRF guard (#876) ──────────────────────────────────
+
+async function sameOriginStatus(headers: Record<string, string>): Promise<number | null> {
+  const { NextRequest } = await import("next/server");
+  const { requireAuth } = await import("./api-auth");
+  const { SESSION_COOKIE_NAME } = await import("./auth-constants");
+
+  const session = encodeURIComponent(
+    JSON.stringify({ token: "t", expiresAt: Date.now() + 60_000 }),
+  );
+  const request = new NextRequest("https://app.example.com/api/strategy", {
+    method: "PUT",
+    headers: { cookie: `${SESSION_COOKIE_NAME}=${session}`, ...headers },
+  });
+
+  return requireAuth(request, { requireSameOrigin: true })?.status ?? null;
+}
+
+test("requireSameOrigin allows a matching Origin", async () => {
+  assert.equal(
+    await sameOriginStatus({ origin: "https://app.example.com", "sec-fetch-site": "same-origin" }),
+    null,
+  );
+});
+
+test("requireSameOrigin rejects a mismatched Origin", async () => {
+  assert.equal(await sameOriginStatus({ origin: "https://evil.example" }), 403);
+});
+
+test("requireSameOrigin rejects Sec-Fetch-Site: cross-site", async () => {
+  assert.equal(
+    await sameOriginStatus({ origin: "https://app.example.com", "sec-fetch-site": "cross-site" }),
+    403,
+  );
+});
+
+test("requireSameOrigin fails closed when Origin and Sec-Fetch-Site are both absent", async () => {
+  assert.equal(await sameOriginStatus({}), 403);
+});
+
+test("requireSameOrigin rejects a missing Origin even with Sec-Fetch-Site: same-origin", async () => {
+  assert.equal(await sameOriginStatus({ "sec-fetch-site": "same-origin" }), 403);
+});

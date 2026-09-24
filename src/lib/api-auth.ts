@@ -111,10 +111,10 @@ export function requireAuth(
     const expectedOrigin = request.nextUrl.origin;
     const fetchSite = request.headers.get("sec-fetch-site");
 
-    if (
-      (origin !== null && origin !== expectedOrigin) ||
-      fetchSite === "cross-site"
-    ) {
+    // Fail closed: a missing Origin is rejected rather than assumed same-origin.
+    // Browsers always send Origin on POST/PUT/PATCH/DELETE, which are the only
+    // methods that opt into this check.
+    if (origin !== expectedOrigin || fetchSite === "cross-site") {
       return NextResponse.json(
         {
           success: false,

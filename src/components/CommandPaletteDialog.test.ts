@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
 
 // Test suite for CommandPaletteDialog's filtering, navigation, and keyboard handling.
@@ -236,4 +238,21 @@ test("CommandPaletteDialog — integration: narrow filter to single result, then
   // Navigate up should also wrap back to 0
   selectedIndex = navigateArrowUp(selectedIndex, filtered.length);
   assert.equal(selectedIndex, 0);
+});
+
+// ── Focus trap and stacking (#881, #882) ─────────────────────────────────
+
+const dialogSource = fs.readFileSync(
+  path.join(process.cwd(), "src/components/CommandPaletteDialog.tsx"),
+  "utf8",
+);
+
+test("CommandPaletteDialog — wires useFocusTrap onto the dialog container", () => {
+  assert.match(dialogSource, /useFocusTrap\(containerRef,\s*true\);/);
+  assert.match(dialogSource, /ref=\{containerRef\}\s*role="dialog"/);
+});
+
+test("CommandPaletteDialog — uses the shared modal z-index tier, not a hardcoded value", () => {
+  assert.match(dialogSource, /\bz-modal\b/);
+  assert.doesNotMatch(dialogSource, /z-\[\d+\]/);
 });

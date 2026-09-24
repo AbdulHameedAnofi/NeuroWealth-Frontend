@@ -1,86 +1,56 @@
 ## Summary
 
-Fixes four issues: cookie-consent shape validation, PortfolioDashboard error logging, and adds missing a11y/responsive/keyboard tests.
+Fixes four issues: two in the command palette (z-index and focus trap) and two security fixes (CSRF check that fails closed, and a Next.js upgrade that patches the middleware auth bypass).
+
+Closes #882, closes #881, closes #876, closes #875
 
 ## Changes
 
-**#794 — Audit: reopen and fix issues mis-closed by PR #755**
+**#882 — CommandPaletteDialog uses the shared z-index scale**
+- Replaced the hardcoded `z-[9999]` with `z-modal`. Tailwind v4 generates this class from `--z-index-modal` (1020) in `globals.css`, and `Modal.tsx` already uses it.
+- Toasts (`--z-index-toast`, 1030) and the diagnostics panel (`--z-index-dev-tool`, 1040) now stack above the open palette, as the overlay scale intends.
 
-- **#689 — CookieConsentContext shape validation**: Added `isValidConsentState()` that validates `status` is one of `pending|accepted|rejected|custom`, `lastUpdated` is `string|null`, and all four `preferences` booleans are present. Invalid stored data is now logged, cleared from localStorage, and the banner is re-shown instead of trusting a corrupt shape.
-- **#690 — PortfolioDashboard logger.error**: The catch block in `loadPortfolio()` now calls `logger.error("portfolio_fetch_failed", loadError)` before setting the error state, routing failures through the centralized logger.
+**#881 — Focus trap in CommandPaletteDialog**
+- Added `useFocusTrap(containerRef, true)` on the `role="dialog"` container, the same pattern as `Modal.tsx` and `Drawer.tsx`.
+- The trap is always active because `CommandPalette` only mounts the dialog while it is open. On close, the trap's cleanup returns focus to the element that had it before the palette opened.
 
-**#790 — WalletConnectionStates aria-live tests**
-- Added `WalletConnectionStates.test.ts` asserting all three connection states (restoring/connected/disconnected) have `role="status"` and `aria-live="polite"`, plus `data-qa` selectors per state.
+**#876 — `requireAuth` CSRF check fails closed**
+- With `requireSameOrigin: true`, requests are now rejected unless `Origin` exactly matches the request origin. Before this change, a request with neither `Origin` nor `Sec-Fetch-Site` was treated as same-origin.
+- Only `POST /api/transactions` and `PUT /api/strategy` opt in. Browsers always send `Origin` on POST/PUT, and the app calls these routes with same-origin `fetch`, so normal app traffic is unaffected.
+- **Scope note:** I also updated `src/app/api/strategy/route.test.ts` and `src/app/api/transactions/route.test.ts`, which the issue didn't list. Their test requests had no `Origin` header, which no browser would send, so I added `Origin: http://localhost:3000`.
 
-**#789 — DiagnosticsPanelContent responsive-layout test**
-- Added `DiagnosticsPanelContent.test.ts` locking in the fixed `w-[400px]` width class, `h-[500px]` height, fixed bottom-right positioning, and verifying the width is not viewport-relative (no `vw`/`min()`/`max()` units).
+**#875 — Upgrade Next.js to patch CVE-2025-29927 (GHSA-f82v-jwr5-mffw)**
+- `next` and `eslint-config-next` go from `14.2.3` to `14.2.35`, the latest 14.2.x.
+- Updated `docs/security/npm-audit-policy.md`. Advisories for `next` drop from 35 (3 critical) to 23 (2 critical).
+- **Still open:** 14.2.35 is the last 14.x release. GHSA-2xp9-vwfh-vxw4 (RCE in image optimization) and GHSA-p293-qw3h-jr36 (RCE on Windows-hosted servers) are only fixed in `>=15.5.24`. The doc keeps `next` as `must-fix` pending a 15.5.x upgrade.
+- `yarn audit --json` timed out against the registry again, so I took the `next` numbers from npm's bulk advisory endpoint. The doc says this and notes that the counts for the rest of the dependency tree are from before the upgrade.
 
-**#788 — FirstDepositStep keyboard-operability test**
-- Added `FirstDepositStep.test.ts` simulating Enter and Space keydown on asset cards, asserting selection fires and `preventDefault` is called (stops page scroll). Also verifies other keys (Tab, Escape) don't trigger selection, and that cards have `tabIndex=0` and `role="button"`.
+## Verification
 
-## Checks
+**Automated tests**
+- `src/lib/api-auth.test.ts`: new tests for four cases:
+  - matching `Origin` is allowed
+  - mismatched `Origin` gets 403
+  - `Sec-Fetch-Site: cross-site` gets 403
+  - missing `Origin` gets 403, with or without `Sec-Fetch-Site`
+- `src/components/CommandPaletteDialog.test.ts`: new source tests asserting that `useFocusTrap` is attached to the dialog container, that `z-modal` is used, and that no hardcoded `z-[N]` class remains.
+- Passing: `api-auth`, `CommandPaletteDialog`, `strategy/route`, `transactions/route` and `middleware` tests.
 
-- `npx tsc --noEmit` — pre-existing errors only, none introduced by this PR
-- `npx next lint` — no warnings or errors
+**Manual check of the bypass (`next dev`)**
+- Requests to `/dashboard` with `x-middleware-subrequest` (`middleware`, `middleware:…` ×5, `src/middleware:…` ×5) now get **400**.
 
-Closes #794
-Closes #790
-Closes #789
-Closes #788
-Round-3 cleanup pass: removes dead code shipped from a completed-but-unwired
-dashboard refactor, a leftover pre-recharts helper, an unused devDependency,
-and an unused mock chart dataset that ran eagerly at import time.
+**Failures already on `main`, not caused by this PR**
+- `yarn typecheck` reports the same 7 errors before and after this PR (`useNotificationPreferences.ts`, `useAsyncState.test.ts`, `notifications-race.test.ts`, `release-checklist/page.test.tsx`).
+- `yarn build` compiles under 14.2.35, then stops at type-checking because `useNotificationPreferences.ts` is missing its `useEffect` import (one of the errors above).
+- `StrategySelector.test.ts` hangs on `main` as well. It mocks `fetch` and doesn't touch the changed code.
 
-- `AllocationSection`, `ActivitySection`, and `SummarySection` were split out
-  of `PortfolioDashboard` in a prior refactor but never adopted — the parent
-  still renders the panels inline via i18n-driven JSX, so the extracted
-  components (and their matching `AllocationWidgetSkeleton`) were unused. They
-  hardcode English copy instead of pulling from `useI18n`/`AppMessages`, so
-  wiring them in as-is would have silently dropped translations. Deleted
-  rather than migrated to avoid that regression.
-- `buildDonutBackground()` in `PortfolioDashboard.tsx` was leftover from
-  before the manual CSS conic-gradient donut was replaced by
-  `AllocationChart`/recharts, and was never called.
-- `vitest` was listed as a devDependency but never configured or imported;
-  the test runner is Node's built-in test runner via `tsx`, matching
-  README/CONTRIBUTING.
-- `multiLineData` / `generateMultiLineData()` in `mock-chart-data.ts` was
-  exported but never imported by the charts docs page (unlike its siblings),
-  and ran eagerly at module-import time on every import of the module.
+## QA steps
 
-## Changes
+1. Open the palette with Cmd/Ctrl+K. Press Tab and Shift+Tab repeatedly: focus should stay inside the palette. Press Escape: focus should return to the element that had it before.
+2. With the palette open, trigger a toast. The toast should appear above the palette backdrop.
+3. Change the strategy in the Strategy selector and submit a deposit quote. Both should succeed (no 403).
+4. `curl -X PUT <host>/api/strategy -H 'Cookie: nw_session=<valid>' -H 'Content-Type: application/json' -d '{"strategy":"balanced"}'` with no `Origin` header should return **403**.
 
-- `src/components/dashboard/PortfolioDashboard.tsx` — remove dead
-  `buildDonutBackground()`
-- `src/components/dashboard/AllocationSection.tsx`,
-  `ActivitySection.tsx`, `SummarySection.tsx` — deleted (unused)
-- `src/components/ui/Skeleton.tsx` — remove unused
-  `AllocationWidgetSkeleton` preset
-- `package.json` / `yarn.lock` — remove unused `vitest` devDependency
-- `src/lib/mock-chart-data.ts` — remove unused `multiLineData`,
-  `generateMultiLineData()`, and the now-orphaned
-  `BenchmarkComparisonPoint` type
-- `src/lib/mock-chart-data.test.ts` — remove the corresponding
-  `generateMultiLineData()` test block
+## Follow-up needed (out of scope)
 
-## QA
-
-- `yarn install` — clean
-- `yarn typecheck` — no new errors (one pre-existing failure in
-  `src/useDateFilterMock.ts`, confirmed present on `main` before this branch
-  via `git stash` diff)
-- `yarn test` — 15 pre-existing failures, identical count with and without
-  this branch's changes (confirmed via `git stash` diff);
-  `mock-chart-data.test.ts` passes cleanly on its own
-- `yarn lint` — no new errors (2 pre-existing errors in `AuditTrail.tsx` and
-  `composeProviders.tsx`, neither touched here)
-
-No new duplicate abstractions were introduced — this is a pure removal of
-unreferenced code.
-
-## Issues
-
-closes #722
-closes #723
-closes #719
-closes #726
+`middleware.ts` is at the repo root, but this app uses `src/app`. Next.js only loads middleware from the same level as `app/`, which here means `src/middleware.ts`, so the middleware never runs. Under `next dev`, an unauthenticated `GET /dashboard` returns **200** instead of redirecting to `/login`. Moving the file (and fixing the `../middleware` import in `src/middleware.test.ts`) should be its own PR, since it changes routing behavior.
