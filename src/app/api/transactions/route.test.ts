@@ -13,7 +13,7 @@ function makePostRequest(body: unknown, scenario?: string, authenticated = true)
   const url = scenario
     ? `http://localhost:3000/api/transactions?scenario=${scenario}`
     : "http://localhost:3000/api/transactions";
-  const headers = new Headers({ "Content-Type": "application/json" });
+  const headers = new Headers({ "Content-Type": "application/json", Origin: "http://localhost:3000" });
   if (authenticated) {
     headers.set("Cookie", `nw_session=${VALID_SESSION_COOKIE}`);
   }
@@ -127,6 +127,7 @@ test("POST /api/transactions returns 400 for malformed JSON body", async () => {
     headers: {
       "Content-Type": "application/json",
       Cookie: `nw_session=${VALID_SESSION_COOKIE}`,
+      Origin: "http://localhost:3000",
     },
     body: "not-json",
   });
@@ -148,6 +149,7 @@ test("POST /api/transactions returns 413 for oversized JSON body", async () => {
       "Content-Type": "application/json",
       "Content-Length": String(MAX_BODY_BYTES + 1),
       Cookie: `nw_session=${VALID_SESSION_COOKIE}`,
+      Origin: "http://localhost:3000",
     },
     body: "{}",
   });
