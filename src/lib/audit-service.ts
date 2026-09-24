@@ -7,12 +7,8 @@ export type { AuditEvent, AuditService } from "@/lib/mock-audit";
 
 import { AuditService, mockAuditService } from "@/lib/mock-audit";
 
-let activeAuditService: AuditService = mockAuditService;
+const activeAuditService: AuditService = mockAuditService;
 
 export function getAuditService(): AuditService {
   return activeAuditService;
-}
-
-export function setAuditService(service: AuditService): void {
-  activeAuditService = service;
 }
