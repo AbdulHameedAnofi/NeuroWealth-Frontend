@@ -70,13 +70,21 @@ export default function PreferencesPage() {
     pageLoading,
     isDirty,
     handleSave,
-    handleCancel,
+    handleCancel: revertForm,
   } = useSettingsForm<PreferencesData>(STORAGE_KEY, DEFAULT, {
     auditSection: "preferences",
     onSaveSuccess: (savedData) => {
       setAppTheme(savedData.theme);
     },
   });
+
+  // Live-preview: swatches apply the theme immediately via setAppTheme.
+  // Cancel must revert both the draft form state and the applied theme
+  // back to the last-saved value so an un-saved preview never sticks.
+  const handleCancel = () => {
+    revertForm();
+    setAppTheme(saved.theme);
+  };
 
   const handleThemeOptionChange = (theme: ThemeMode) => {
     setDraft({ ...draft, theme });

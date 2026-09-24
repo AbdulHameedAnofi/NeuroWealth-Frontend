@@ -18,14 +18,14 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 import { isSandboxScenario, parseSandboxScenario } from "@/lib/sandbox-scenario";
 import { createServerFetcher } from "@/lib/api-client";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 import { requireAuth } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest) {
   const authError = requireAuth(request, { requireSameOrigin: true });
   if (authError) return authError;
 
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = getRateLimitKey(request);
   const limit = checkRateLimit(`POST:/api/transactions:${ip}`, {
     maxRequests: 20,
     windowMs: 60_000,
