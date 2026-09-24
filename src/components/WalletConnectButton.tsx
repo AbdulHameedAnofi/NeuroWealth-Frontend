@@ -59,71 +59,80 @@ export default function WalletConnectButton({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const replaceModalContent = () => {
-      const modalElements = document.querySelectorAll(
-        '[class*="swk"], [class*="modal"]',
-      );
-      modalElements.forEach((modal) => {
-        const walker = document.createTreeWalker(modal, NodeFilter.SHOW_TEXT);
+    const [modalObserver, setModalObserver] = useState<MutationObserver | null>(null);
 
-        const textNodes = [];
-        let node;
-        while ((node = walker.nextNode())) {
-          textNodes.push(node);
-        }
+    useEffect(() => {
+    const handleModalMutations = (modal: Element) => {
+      const walker = document.createTreeWalker(modal, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        textNodes.push(node);
+      }
 
-        textNodes.forEach((textNode) => {
-          const text = textNode.textContent || "";
-          if (
-            text.includes("Learn more") ||
-            text.includes("What is a Wallet") ||
-            text.includes("What is Stellar") ||
-            text.includes("Wallets are used to send") ||
-            text.includes("Stellar is a decentralized")
-          ) {
-            const parent = textNode.parentElement;
-            if (parent) {
-              parent.style.display = "none";
-            }
+      textNodes.forEach((textNode) => {
+        const text = textNode.textContent || "";
+        if (
+          text.includes("Learn more") ||
+          text.includes("What is a Wallet") ||
+          text.includes("What is Stellar") ||
+          text.includes("Wallets are used to send") ||
+          text.includes("Stellar is a decentralized")
+        ) {
+          const parent = textNode.parentElement;
+          if (parent) {
+            parent.style.display = "none";
           }
-        });
-
-        if (!modal.querySelector(".custom-neurowealth-message")) {
-          const customMessage = document.createElement("div");
-          customMessage.className = "custom-neurowealth-message";
-          customMessage.innerHTML = `
-            <div style="
-              padding: 16px;
-              margin: 16px 0;
-              background: var(--background, #fff);
-              color: var(--foreground, #000);
-              border-radius: 8px;
-              font-size: 14px;
-              line-height: 1.5;
-              border: 1px solid rgba(156, 163, 175, 0.3);
-            ">
-              🧠 Connect your Stellar wallet to access NeuroWealth's AI-powered investment strategies and portfolio management tools.
-            </div>
-          `;
-          modal.appendChild(customMessage);
         }
       });
+
+      if (!modal.querySelector(".custom-neurowealth-message")) {
+        const customMessage = document.createElement("div");
+        customMessage.className = "custom-neurowealth-message";
+        const messageContainer = document.createElement("div");
+        messageContainer.style.cssText = `
+          padding: 16px;
+          margin: 16px 0;
+          background: var(--background, #fff);
+          color: var(--foreground, #000);
+          border-radius: 8px;
+          font-size: 14px;
+          line-height: 1.5;
+          border: 1px solid rgba(156, 163, 175, 0.3);
+        `;
+        messageContainer.textContent = "🧠 Connect your Stellar wallet to access NeuroWealth's AI-powered investment strategies and portfolio management tools.";
+        customMessage.appendChild(messageContainer);
+        modal.appendChild(customMessage);
+      }
     };
 
-    const observer = new MutationObserver(() => {
-      setTimeout(replaceModalContent, 100);
+    const rootObserver = new MutationObserver((mutationsList, observer) => {
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          for (const node of Array.from(mutation.addedNodes)) {
+            if (node instanceof HTMLElement && (node.matches('[class*="swk"]') || node.matches('[class*="modal"]'))) {
+              handleModalMutations(node);
+              const newModalObserver = new MutationObserver(() => handleModalMutations(node));
+              newModalObserver.observe(node, { childList: true, subtree: true });
+              setModalObserver(newModalObserver);
+              observer.disconnect(); // Disconnect the root observer once the modal is found
+              return;
+            }
+          }
+        }
+      }
     });
 
-    observer.observe(document.body, {
+    rootObserver.observe(document.body, {
       childList: true,
       subtree: true,
     });
 
     return () => {
-      observer.disconnect();
+      rootObserver.disconnect();
+      modalObserver?.disconnect();
     };
-  }, []);
+  }, [modalObserver]);
 
   const handleClick = async () => {
     setIsLoading(true);

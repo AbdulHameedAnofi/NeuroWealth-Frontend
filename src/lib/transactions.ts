@@ -366,6 +366,12 @@ export function getDefaultTransactionValues(kind: TransactionKind): TransactionF
 
 function parseAmount(value: string): number {
   const normalized = value.replace(/,/g, "").trim();
+
+  // Reject hexadecimal (0x...), scientific notation (e/E), or anything not a simple decimal number
+  if (!/^-?\d*\.?\d+$/.test(normalized) || /^[+-]?(0x)?[0-9a-fA-F]+\.?[0-9a-fA-F]*(e[+-]?[0-9]+)?$/.test(normalized) && !/^-?\d*\.?\d+$/.test(normalized)) {
+    return Number.NaN;
+  }
+
   const amount = Number(normalized);
 
   if (!Number.isFinite(amount)) {
