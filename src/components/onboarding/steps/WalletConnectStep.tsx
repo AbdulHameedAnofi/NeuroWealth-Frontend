@@ -89,6 +89,7 @@ export default function WalletConnectStep({ onNext, onSkip, onBack }: WalletConn
             `}
             onClick={() => !isConnecting && setSelectedWallet(wallet.id)}
             role="button"
+            aria-pressed={selectedWallet === wallet.id}
             tabIndex={0}
             onKeyDown={(e) => {
               if ((e.key === 'Enter' || e.key === ' ') && !isConnecting) {
