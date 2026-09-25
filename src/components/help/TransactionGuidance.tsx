@@ -163,7 +163,12 @@ const severityColors = {
   high: 'bg-red-500/20 text-red-400 border-red-500/30'
 };
 
-export default function TransactionGuidance() {
+interface TransactionGuidanceProps {
+  /** Opens the Help Center's Contact Support tab. */
+  onContactSupport?: () => void;
+}
+
+export default function TransactionGuidance({ onContactSupport }: TransactionGuidanceProps = {}) {
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<'symptoms' | 'solutions' | 'preventive' | null>(null);
 
@@ -355,7 +360,16 @@ export default function TransactionGuidance() {
                   <Button variant="ghost" onClick={() => setSelectedIssue(null)}>
                     Back to All Issues
                   </Button>
-                  <Button variant="ghost" onClick={() => (globalThis.location.href = '/help#support')}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (onContactSupport) {
+                        onContactSupport();
+                      } else {
+                        globalThis.location.assign('/dashboard/help');
+                      }
+                    }}
+                  >
                     Contact Support
                   </Button>
                 </div>
