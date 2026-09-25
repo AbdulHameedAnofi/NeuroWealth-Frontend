@@ -74,7 +74,7 @@ export default function HistoryPage() {
         The full deposits / withdrawals / rebalancing timeline with filters,
         pagination, status tags, and tx-hash explorer links (Issue 472).
       */}
-      {!loading && !error && scenario !== "empty" && <TransactionHistory />}
+      {!loading && !error && scenario !== "empty" && <TransactionHistory embedded />}
     </div>
   );
 }

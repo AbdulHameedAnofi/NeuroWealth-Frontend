@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent, useRef } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 import {
   Button,
   Card,
@@ -55,21 +56,23 @@ const MAX_MESSAGE_LENGTH = 1000;
 const MAX_SUBJECT_LENGTH = 100;
 
 const categories = [
-  "Technical Issue",
-  "Transaction Problem",
-  "Account Access",
-  "Security Concern",
-  "General Inquiry",
-  "Feature Request",
-  "Bug Report",
-];
+  "technicalIssue",
+  "transactionProblem",
+  "accountAccess",
+  "securityConcern",
+  "generalInquiry",
+  "featureRequest",
+  "bugReport",
+] as const;
 
 export default function SupportForm() {
+  const { messages } = useI18n();
+  const t = messages.help.support;
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     subject: "",
-    category: "Technical Issue",
+    category: "technicalIssue",
     message: "",
     transactionId: "",
   });
@@ -85,26 +88,26 @@ export default function SupportForm() {
   const validateSync = () => {
     const nextErrors: ValidationErrors<SupportField> = {
       name:
-        required(formData.name, "Name is required") ||
-        minLength(formData.name, 2, "Name must be at least 2 characters"),
+        required(formData.name, t.nameRequired) ||
+        minLength(formData.name, 2, t.nameMin),
       email:
-        required(formData.email, "Email address is required") ||
-        emailFormat(formData.email, "Enter a valid email address"),
+        required(formData.email, t.emailRequired) ||
+        emailFormat(formData.email, t.emailInvalid),
       subject:
-        required(formData.subject, "Subject is required") ||
+        required(formData.subject, t.subjectRequired) ||
         maxLength(
           formData.subject,
           MAX_SUBJECT_LENGTH,
-          `Subject must be ${MAX_SUBJECT_LENGTH} characters or less`,
+          t.subjectMax.replace("{max}", String(MAX_SUBJECT_LENGTH)),
         ),
-      category: required(formData.category, "Select a support category"),
+      category: required(formData.category, t.categoryRequired),
       message:
-        required(formData.message, "Message is required") ||
+        required(formData.message, t.messageRequired) ||
         lengthRange(
           formData.message,
           10,
           MAX_MESSAGE_LENGTH,
-          `Message must be between 10 and ${MAX_MESSAGE_LENGTH} characters`,
+          t.messageRange.replace("{max}", String(MAX_MESSAGE_LENGTH)),
         ),
     };
 
@@ -130,7 +133,7 @@ export default function SupportForm() {
       value,
       shouldFail: (v) => v.toLowerCase().includes("404"),
       message:
-        "We could not verify that transaction reference in the mock lookup.",
+        t.transactionLookupFailed,
       asyncDelay: 500,
     });
 
@@ -188,25 +191,25 @@ export default function SupportForm() {
         name: "",
         email: "",
         subject: "",
-        category: "Technical Issue",
+        category: "technicalIssue",
         message: "",
         transactionId: "",
       });
     } catch {
       setSubmissionState({ status: "error" });
       setErrors({
-        form: "Failed to submit support request. Please try again later.",
+        form: t.submitFailed,
       });
     }
   };
 
   const contactSectionError =
     errors.name || errors.email
-      ? "Complete your contact details before we can respond."
+      ? t.contactSectionError
       : undefined;
   const requestSectionError =
     errors.subject || errors.category || errors.message || errors.transactionId
-      ? "Review the request details and fix the highlighted issues."
+      ? t.requestSectionError
       : undefined;
   const summaryErrors = submitted ? getErrorList(errors) : [];
 
@@ -232,14 +235,14 @@ export default function SupportForm() {
             <CheckCircle2 className="h-8 w-8 text-emerald-400" />
           </div>
           <h2 className="text-2xl font-bold text-white">
-            Support Request Submitted
+            {t.successTitle}
           </h2>
           <p className="text-slate-300">
-            Your request is in the queue and a confirmation email is on the way.
+            {t.successBody}
           </p>
         </div>
         <div className="rounded-xl border border-slate-700/50 bg-slate-950/35 p-4 text-center">
-          <p className="text-sm text-slate-400">Reference ID</p>
+          <p className="text-sm text-slate-400">{t.referenceId}</p>
           <p className="mt-1 font-mono text-lg text-emerald-300">
             {submissionState.referenceId}
           </p>
@@ -248,7 +251,7 @@ export default function SupportForm() {
           onClick={() => setSubmissionState({ status: "idle" })}
           variant="secondary"
         >
-          Submit Another Request
+          {t.submitAnother}
         </Button>
       </Card>
     );
@@ -258,22 +261,21 @@ export default function SupportForm() {
     <div className="mx-auto max-w-3xl space-y-6">
       <Card className="space-y-6 border-slate-700/50 bg-dark-800/80">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white">Contact Support</h2>
+          <h2 className="text-2xl font-bold text-white">{t.title}</h2>
           <p className="text-sm text-slate-400">
-            Shared validation patterns here cover required, format, range, and
-            async-like checks.
+            {t.subtitle}
           </p>
         </div>
 
         <FormErrorSummary
-          title="Please fix the support form errors below."
+          title={t.errorSummaryTitle}
           errors={summaryErrors}
         />
 
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <SectionError title="Contact Details" message={contactSectionError}>
+          <SectionError title={t.contactDetails} message={contactSectionError}>
             <div className="grid gap-5 md:grid-cols-2">
-              <FormField id="support-name" label="Name" error={errors.name}>
+              <FormField id="support-name" label={t.nameLabel} error={errors.name}>
                 {(controlProps) => (
                   <input
                     {...controlProps}
@@ -285,12 +287,12 @@ export default function SupportForm() {
                         ? "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
                         : "border-slate-700/60 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/15"
                     }`}
-                    placeholder="Your full name"
+                    placeholder={t.namePlaceholder}
                   />
                 )}
               </FormField>
 
-              <FormField id="support-email" label="Email Address" error={errors.email}>
+              <FormField id="support-email" label={t.emailLabel} error={errors.email}>
                 {(controlProps) => (
                   <input
                     {...controlProps}
@@ -309,9 +311,9 @@ export default function SupportForm() {
             </div>
           </SectionError>
 
-          <SectionError title="Request Details" message={requestSectionError}>
+          <SectionError title={t.requestDetails} message={requestSectionError}>
             <div className="space-y-5">
-              <FormField id="support-category" label="Category" error={errors.category}>
+              <FormField id="support-category" label={t.categoryLabel} error={errors.category}>
                 {(controlProps) => (
                   <select
                     {...controlProps}
@@ -331,7 +333,7 @@ export default function SupportForm() {
                         value={category}
                         className="bg-slate-950"
                       >
-                        {category}
+                        {t.categories[category]}
                       </option>
                     ))}
                   </select>
@@ -340,11 +342,11 @@ export default function SupportForm() {
 
               <FormField
                 id="support-subject"
-                label="Subject"
+                label={t.subjectLabel}
                 error={errors.subject}
                 hint={
                   <span className="flex items-center justify-between w-full">
-                    <span>Required</span>
+                    <span>{t.subjectHint}</span>
                     <span>
                       {formData.subject.length}/{MAX_SUBJECT_LENGTH}
                     </span>
@@ -365,19 +367,19 @@ export default function SupportForm() {
                         ? "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
                         : "border-slate-700/60 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/15"
                     }`}
-                    placeholder="Brief description of your issue"
+                    placeholder={t.subjectPlaceholder}
                   />
                 )}
               </FormField>
 
               <FormField
                 id="support-transaction-id"
-                label="Transaction ID"
+                label={t.transactionIdLabel}
                 error={errors.transactionId}
                 hint={
                   <>
-                    Async mock check: references containing{" "}
-                    <span className="font-mono">404</span> fail lookup.
+                    {t.transactionIdHintBefore}{" "}
+                    <span className="font-mono">404</span> {t.transactionIdHintAfter}
                   </>
                 }
               >
@@ -398,7 +400,7 @@ export default function SupportForm() {
                           ? "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
                           : "border-slate-700/60 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/15"
                       }`}
-                      placeholder="Optional: TX-123..."
+                      placeholder={t.transactionIdPlaceholder}
                     />
                     {asyncValidationState.transactionId === "validating" && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -411,12 +413,12 @@ export default function SupportForm() {
 
               <FormField
                 id="support-message"
-                label="Message"
+                label={t.messageLabel}
                 error={errors.message}
                 hint={
                   <span className="flex items-center justify-between w-full">
                     <span>
-                      Please be as detailed as possible
+                      {t.messageHint}
                     </span>
                     <span>
                       {formData.message.length}/{MAX_MESSAGE_LENGTH}
@@ -438,7 +440,7 @@ export default function SupportForm() {
                         ? "border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
                         : "border-slate-700/60 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/15"
                     }`}
-                    placeholder="Please provide details about your issue or question."
+                    placeholder={t.messagePlaceholder}
                   />
                 )}
               </FormField>
@@ -454,20 +456,20 @@ export default function SupportForm() {
             aria-busy={submissionState.status === "submitting"}
           >
             {submissionState.status === "submitting"
-              ? "Submitting..."
-              : "Submit Request"}
+              ? t.submitting
+              : t.submit}
           </Button>
         </form>
       </Card>
 
       <Card className="border-slate-700/50 bg-dark-800/80">
         <h3 className="mb-3 text-lg font-semibold text-white">
-          Other Support Options
+          {t.otherOptions}
         </h3>
         <div className="space-y-3 text-sm text-slate-300">
-          <p>Live Chat: Available 24/7 for urgent issues.</p>
-          <p>Email Support: support@neurowealth.com</p>
-          <p>Community Forum: Get help from other users.</p>
+          <p>{t.liveChat}</p>
+          <p>{t.emailSupport}</p>
+          <p>{t.forum}</p>
         </div>
       </Card>
     </div>

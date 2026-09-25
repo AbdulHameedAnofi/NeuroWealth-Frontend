@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
 import { POST } from "./route";
 import { NextRequest } from "next/server";
+import { getRateLimitKey, resetRateLimitStore } from "@/lib/rate-limit";
 import { ERROR_CODE, HTTP_STATUS, MAX_BODY_BYTES } from "@/lib/api-response";
 
 const VALID_SESSION_COOKIE = encodeURIComponent(
@@ -230,4 +232,29 @@ test("POST /api/transactions validates invalid wallet address for withdrawals", 
   assert.equal(body.success, false);
   assert.equal(body.error.code, "VALIDATION_ERROR");
   assert.ok(body.error.details.walletAddress);
+});
+
+test("rate-limit key uses getRateLimitKey, not a raw spoofable x-forwarded-for read", () => {
+  const source = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
+  assert.match(source, /getRateLimitKey\(request\)/);
+  assert.doesNotMatch(
+    source,
+    /headers\.get\(["']x-forwarded-for["']\)\s*\?\?\s*["']unknown["']/,
+  );
+});
+
+test("rate-limit key prefers trusted headers over a spoofed x-forwarded-for", () => {
+  const req = new NextRequest("http://localhost:3000/api/transactions", {
+    method: "POST",
+    headers: {
+      "x-forwarded-for": "198.51.100.88, 10.0.0.5",
+      "x-real-ip": "203.0.113.42",
+    },
+  });
+
+  assert.equal(getRateLimitKey(req), "203.0.113.42");
+});
+
+test.afterEach(() => {
+  resetRateLimitStore();
 });

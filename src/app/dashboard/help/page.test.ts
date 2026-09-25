@@ -3,6 +3,8 @@ import test from "node:test";
 import React, { createElement } from "react";
 import { render, cleanup, fireEvent } from "@testing-library/react";
 import { setupDomGlobals } from "@/test-setup";
+import { I18nProvider } from "@/contexts/I18nContext";
+import { dictionaries } from "@/lib/i18n/messages";
 import HelpPage from "./page";
 
 setupDomGlobals();
@@ -15,11 +17,14 @@ Object.assign(globalThis, { React });
  * switch the Help Center to its Contact Support tab in place.
  */
 test("help page — Contact Support in Transaction Help opens the contact tab", () => {
-  const { getByRole, getByText } = render(createElement(HelpPage));
+  const guidance = dictionaries.en.help.guidance;
+  const { getByRole, getByText } = render(
+    createElement(I18nProvider, null, createElement(HelpPage)),
+  );
 
   fireEvent.click(getByRole("tab", { name: "Transaction Help" }));
-  fireEvent.click(getByText("Transaction Stuck Pending"));
-  fireEvent.click(getByRole("button", { name: "Contact Support" }));
+  fireEvent.click(getByText(guidance.issues[0].title));
+  fireEvent.click(getByRole("button", { name: guidance.contactSupport }));
 
   const contactTab = getByRole("tab", { name: "Contact Support" });
   assert.equal(contactTab.getAttribute("aria-selected"), "true");

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NotificationPreferences, DEFAULT_PREFERENCES } from "@/lib/mock-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStorageSync } from "@/hooks/useStorageSync";
@@ -57,7 +57,7 @@ export function useNotificationPreferences() {
 
   useEffect(() => {
     const handleSync = () => {
-      setPreferences(readNotificationPreferences());
+      setPreferences(readStoredPreferences());
     };
 
     window.addEventListener("storage", handleSync);
