@@ -256,3 +256,23 @@ test("CommandPaletteDialog — uses the shared modal z-index tier, not a hardcod
   assert.match(dialogSource, /\bz-modal\b/);
   assert.doesNotMatch(dialogSource, /z-\[\d+\]/);
 });
+
+// ── Memoization of derived command lists (#873) ──────────────────────────
+
+test("CommandPaletteDialog — wraps allCommands in useMemo with stable dependencies", () => {
+  assert.match(dialogSource, /const allCommands: Command\[\] = useMemo\(/);
+  assert.match(dialogSource, /\[router, onClose\]/);
+});
+
+test("CommandPaletteDialog — wraps filteredCommands in useMemo over allCommands + query", () => {
+  assert.match(dialogSource, /const filteredCommands = useMemo\(/);
+  assert.match(dialogSource, /\[allCommands, query\]/);
+});
+
+test("CommandPaletteDialog — hoists mockActions out of the render body", () => {
+  assert.match(dialogSource, /const mockActions = \[/);
+  const componentBody = dialogSource.slice(
+    dialogSource.indexOf("export function CommandPaletteDialog"),
+  );
+  assert.doesNotMatch(componentBody, /const mockActions = \[/);
+});

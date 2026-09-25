@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { commandPaletteRoutes } from "@/lib/routeMetadata";
@@ -18,6 +18,19 @@ interface CommandPaletteDialogProps {
   onClose: () => void;
 }
 
+const mockActions = [
+  {
+    id: "action-logout",
+    name: "Mock: Logout",
+    action: () => alert("Logged Out"),
+  },
+  {
+    id: "action-theme",
+    name: "Mock: Toggle Theme",
+    action: () => alert("Theme Toggled"),
+  },
+];
+
 /**
  * The command palette UI. Loaded lazily by `CommandPalette` only after the
  * palette is first opened, so its routes/icons/markup stay out of the initial
@@ -34,39 +47,33 @@ export function CommandPaletteDialog({ onClose }: CommandPaletteDialogProps) {
   // Always mounted open (the parent owns open/close), so the trap is always active.
   useFocusTrap(containerRef, true);
 
-  const mockActions = [
-    {
-      id: "action-logout",
-      name: "Mock: Logout",
-      action: () => alert("Logged Out"),
-    },
-    {
-      id: "action-theme",
-      name: "Mock: Toggle Theme",
-      action: () => alert("Theme Toggled"),
-    },
-  ];
+  const allCommands: Command[] = useMemo(
+    () => [
+      ...commandPaletteRoutes.map((route) => ({
+        ...route,
+        action: () => {
+          router.push(route.path);
+          onClose();
+        },
+      })),
+      ...mockActions.map((action) => ({
+        ...action,
+        icon: Settings,
+        action: () => {
+          action.action();
+          onClose();
+        },
+      })),
+    ],
+    [router, onClose],
+  );
 
-  const allCommands: Command[] = [
-    ...commandPaletteRoutes.map((route) => ({
-      ...route,
-      action: () => {
-        router.push(route.path);
-        onClose();
-      },
-    })),
-    ...mockActions.map((action) => ({
-      ...action,
-      icon: Settings,
-      action: () => {
-        action.action();
-        onClose();
-      },
-    })),
-  ];
-
-  const filteredCommands = allCommands.filter((command) =>
-    command.name.toLowerCase().includes(query.toLowerCase()),
+  const filteredCommands = useMemo(
+    () =>
+      allCommands.filter((command) =>
+        command.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [allCommands, query],
   );
 
   useEffect(() => {
