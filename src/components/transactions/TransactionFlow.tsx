@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./transaction-flow.module.css";
 import { formatCurrency } from "@/lib/formatters";
 import { buildStatusChips } from "@/lib/transactions";
+import { useI18n } from "@/contexts/I18nContext";
 import { useSandbox } from "@/contexts/SandboxContext";
 import { SandboxBadge } from "@/components/ui/SandboxBadge";
 import { TransactionErrorRecovery } from "./TransactionErrorRecovery";
@@ -17,6 +18,8 @@ import { currentStepIndex } from "./utils/transaction-utils";
 import { getToneClassName } from "./utils/transaction-style-utils";
 
 export function TransactionFlow() {
+  const { messages } = useI18n();
+  const t = messages.transactions;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getCurrentScenario, isSandboxMode } = useSandbox();
@@ -58,13 +61,11 @@ export function TransactionFlow() {
             <div>
               <span className={styles.eyebrow}>
                 <span className={styles.eyebrowDot} />
-                Transaction flows
+                {t.flow.eyebrow}
               </span>
-              <h2 className={styles.heading}>Deposit and withdrawal flow</h2>
+              <h2 className={styles.heading}>{t.flow.heading}</h2>
               <p className={styles.intro}>
-                Validate amounts and wallet conditions, confirm fees and request
-                references, then review pending, success, and failure states
-                from one mobile-friendly surface.
+                {t.flow.intro}
               </p>
               {isSandboxMode && (
                 <div className="mt-2">
@@ -75,7 +76,7 @@ export function TransactionFlow() {
 
             <div className={styles.topControls}>
               <div className={styles.controlPanel}>
-                <p className={styles.controlLabel}>Theme preview</p>
+                <p className={styles.controlLabel}>{t.flow.themePreview}</p>
                 <div className={styles.segmentRow}>
                   {(["light", "dark"] as const).map((option) => (
                     <button
@@ -87,14 +88,14 @@ export function TransactionFlow() {
                       onClick={() => handleThemeChange(option)}
                       type="button"
                     >
-                      {option === "light" ? "Light mode" : "Dark mode"}
+                      {option === "light" ? t.flow.lightMode : t.flow.darkMode}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className={styles.controlPanel}>
-                <p className={styles.controlLabel}>Screenshot states</p>
+                <p className={styles.controlLabel}>{t.flow.screenshotStates}</p>
                 <div className={styles.segmentRow}>
                   {(
                     [
@@ -115,7 +116,9 @@ export function TransactionFlow() {
                       onClick={() => handlePreviewChange(option)}
                       type="button"
                     >
-                      {option === "interactive" ? "Live flow" : option}
+                      {option === "interactive"
+                        ? t.flow.liveFlow
+                        : t.flow.previewStates[option]}
                     </button>
                   ))}
                 </div>
@@ -136,7 +139,7 @@ export function TransactionFlow() {
                     onClick={() => handleKindChange(option)}
                     type="button"
                   >
-                    {option === "deposit" ? "Deposit" : "Withdraw"}
+                    {option === "deposit" ? t.flow.deposit : t.flow.withdraw}
                   </button>
                 ))}
               </div>
@@ -159,9 +162,9 @@ export function TransactionFlow() {
 
               <div className={styles.stepper}>
                 {[
-                  { label: "Step 1", value: "Enter details" },
-                  { label: "Step 2", value: "Confirm" },
-                  { label: "Step 3", value: "Track result" },
+                  { label: t.flow.step1, value: t.flow.enterDetails },
+                  { label: t.flow.step2, value: t.flow.confirm },
+                  { label: t.flow.step3, value: t.flow.trackResult },
                 ].map((step, index) => (
                   <div
                     className={[
@@ -227,10 +230,10 @@ export function TransactionFlow() {
 
             <aside className={`${styles.card} ${styles.asideCard}`}>
               <div className={styles.asideSection}>
-                <h3 className={styles.asideTitle}>Wallet conditions</h3>
+                <h3 className={styles.asideTitle}>{t.flow.walletConditions}</h3>
                 <div className={styles.asideList}>
                   <div className={styles.asideItem}>
-                    <span className={styles.asideLabel}>Connected wallet</span>
+                    <span className={styles.asideLabel}>{t.flow.connectedWallet}</span>
                     <span className={styles.asideValue}>
                       {context.connectedWalletLabel}
                     </span>
@@ -241,7 +244,7 @@ export function TransactionFlow() {
                     </span>
                   </div>
                   <div className={styles.asideItem}>
-                    <span className={styles.asideLabel}>Available balance</span>
+                    <span className={styles.asideLabel}>{t.flow.availableBalance}</span>
                     <span
                       className={`${styles.asideValue} ${styles.asideValueMono}`}
                     >
@@ -249,7 +252,7 @@ export function TransactionFlow() {
                     </span>
                   </div>
                   <div className={styles.asideItem}>
-                    <span className={styles.asideLabel}>Strategy</span>
+                    <span className={styles.asideLabel}>{t.shared.strategy}</span>
                     <span className={styles.asideValue}>
                       {context.strategyLabel}
                     </span>
@@ -258,43 +261,43 @@ export function TransactionFlow() {
               </div>
 
               <div className={styles.asideSection}>
-                <h3 className={styles.asideTitle}>Validation rules</h3>
+                <h3 className={styles.asideTitle}>{t.flow.validationRules}</h3>
                 <div className={styles.asideList}>
                   <div className={styles.asideItem}>
-                    <span className={styles.asideLabel}>Minimum</span>
+                    <span className={styles.asideLabel}>{t.flow.minimum}</span>
                     <span className={styles.asideValue}>
                       {formatCurrency(context.minAmount)}
                     </span>
                   </div>
                   <div className={styles.asideItem}>
-                    <span className={styles.asideLabel}>Fees</span>
+                    <span className={styles.asideLabel}>{t.shared.fees}</span>
                     <span className={styles.asideValue}>
                       {formatCurrency(context.fee)}
                     </span>
                   </div>
                   <div className={styles.asideItem}>
-                    <span className={styles.asideLabel}>Lifecycle</span>
+                    <span className={styles.asideLabel}>{t.flow.lifecycle}</span>
                     <span className={styles.asideValue}>
-                      Pending, success, and failure states included
+                      {t.flow.lifecycleValue}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className={styles.asideSection}>
-                <h3 className={styles.asideTitle}>Routes</h3>
+                <h3 className={styles.asideTitle}>{t.flow.routes}</h3>
                 <div className={styles.linkRow}>
                   <Link
                     className={styles.inlineLink}
                     href={`/dashboard?theme=${theme}`}
                   >
-                    Portfolio overview
+                    {t.flow.portfolioOverview}
                   </Link>
                   <Link
                     className={styles.inlineLink}
                     href={`/dashboard/transactions?theme=${theme}`}
                   >
-                    Transaction flow
+                    {t.flow.transactionFlow}
                   </Link>
                 </div>
               </div>

@@ -21,4 +21,10 @@ test.describe("Skip link and main landmark", () => {
     await page.goto("/docs/tokens");
     await expect(page.locator("main#main-content")).toHaveCount(1);
   });
+
+  test("dashboard history has exactly one main", async ({ page }) => {
+    await page.goto("/dashboard/history");
+    await expect(page.locator("main#main-content")).toHaveCount(1);
+    await expect(page.locator("main")).toHaveCount(1);
+  });
 });
