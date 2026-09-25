@@ -64,36 +64,6 @@ export function useSettingsForm<T>(
     return () => clearTimeout(timer);
   }, [options.loadDelayMs, syncFromStorage]);
 
-  useEffect(() => {
-    const handleSync = (e?: Event) => {
-      if (e instanceof StorageEvent && e.key && e.key !== storageKey) {
-        return;
-      }
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const data = JSON.parse(stored) as T;
-          setSaved(data);
-          if (!editing) {
-            setDraft(data);
-          }
-        }
-      } catch (error) {
-        logger.error("Failed to sync storage change in useSettingsForm", {
-          storageKey,
-          error,
-        });
-      }
-    };
-
-    window.addEventListener("storage", handleSync);
-    window.addEventListener("notification-preferences-updated", handleSync);
-    return () => {
-      window.removeEventListener("storage", handleSync);
-      window.removeEventListener("notification-preferences-updated", handleSync);
-    };
-  }, [storageKey, editing]);
-
   const isDirty = JSON.stringify(draft) !== JSON.stringify(saved);
 
   const handleSave = async () => {
