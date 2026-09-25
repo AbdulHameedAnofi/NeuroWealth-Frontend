@@ -44,6 +44,7 @@ const INITIAL_STATE: TransactionAPIState = {
     lastErrorReference: null,
 };
 
+import { useI18n } from "@/contexts/I18nContext";
 export function useTransactionAPI() {
     const [state, setState] = useState<TransactionAPIState>(INITIAL_STATE);
     const requestControllerRef = useRef<AbortController | null>(null);
@@ -95,7 +96,7 @@ export function useTransactionAPI() {
                 }
 
                 const copy = getApiErrorPresentation(error);
-                const recovery = getTransactionRecoveryUI(copy.code, quoteReference);
+                const recovery = getTransactionRecoveryUI(copy.code, tDomain, quoteReference);
                 logger.error("transaction_quote_failed", {
                     code: copy.code,
                     status: copy.status,
@@ -163,7 +164,7 @@ export function useTransactionAPI() {
                 }
 
                 const copy = getApiErrorPresentation(error);
-                const recovery = getTransactionRecoveryUI(copy.code, quoteReference);
+                const recovery = getTransactionRecoveryUI(copy.code, tDomain, quoteReference);
                 logger.error("transaction_submit_failed", {
                     code: copy.code,
                     status: copy.status,

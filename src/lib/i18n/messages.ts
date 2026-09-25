@@ -546,6 +546,83 @@ export interface AppMessages {
       loadingText: string;
     };
   };
+    domain: {
+      context: {
+        withdrawFunds: string;
+        withdrawIntro: string;
+        reviewWithdrawal: string;
+        confirmWithdrawal: string;
+        withdrawalAmount: string;
+        withdrawHint: string;
+        destinationWallet: string;
+        destinationHint: string;
+        vaultReady: string;
+        sameDay: string;
+        treasuryReview: string;
+        addCapital: string;
+        depositIntro: string;
+        reviewDeposit: string;
+        confirmDeposit: string;
+        depositAmount: string;
+        depositHint: string;
+        fundingWallet: string;
+        fundingHint: string;
+        freighterConnected: string;
+        usuallyCompletes: string;
+        networkFee: string;
+      };
+      validation: {
+        connectFunding: string;
+        reconnectVault: string;
+        enterAmount: string;
+        validAmount: string;
+        minDeposit: (min: number) => string;
+        minWithdrawal: (min: number) => string;
+        fundingAvailable: (amt: string) => string;
+        withdrawAvailable: (amt: string) => string;
+        enterDestination: string;
+        validStellarAddress: string;
+      };
+      pending: {
+        statusLabel: string;
+        submittingDeposit: string;
+        submittingWithdrawal: string;
+        feeExpired: string;
+        liquidityChanged: string;
+      };
+      receipt: {
+        depositConfirmed: string;
+        withdrawalConfirmed: string;
+        failed: string;
+        explorerAvailable: string;
+      };
+      statusChips: {
+        walletRequired: string;
+        depositCapacity: (amt: string) => string;
+        withdrawalCapacity: (amt: string) => string;
+      };
+      recovery: {
+        networkErrorTitle: string;
+        networkErrorDesc: string;
+        timeoutTitle: string;
+        timeoutDesc: string;
+        serverErrorTitle: string;
+        serverErrorDesc: string;
+        validationErrorTitle: string;
+        validationErrorDesc: string;
+        quotaErrorTitle: string;
+        quotaErrorDesc: string;
+        stateConflictTitle: string;
+        stateConflictDesc: string;
+        unknownErrorTitle: string;
+        unknownErrorDesc: string;
+        actionRetry: string;
+        actionEdit: string;
+        actionSupport: string;
+        actionBack: string;
+        actionReview: string;
+      };
+    };
   audit: {
     title: string;
     subtitle: string;
