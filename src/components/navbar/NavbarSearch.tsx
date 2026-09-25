@@ -65,8 +65,7 @@ export function NavbarSearchTrigger({
 export function NavbarSearchModal({
   isMobileSearchOpen,
   setIsMobileSearchOpen,
-  mobileSearchRef,
-}: Pick<NavbarSearchState, "isMobileSearchOpen" | "setIsMobileSearchOpen" | "mobileSearchRef">) {
+}: Pick<NavbarSearchState, "isMobileSearchOpen" | "setIsMobileSearchOpen">) {
   const modalRef = useRef<HTMLDivElement>(null);
   useFocusTrap(modalRef, isMobileSearchOpen);
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { mockAuditService } from "@/lib/mock-audit";
 import { logger } from "@/lib/logger";
 import { useStorageSync } from "@/hooks/useStorageSync";
@@ -23,7 +23,15 @@ export function useSettingsForm<T>(
 ) {
   const [saved, setSaved] = useState<T>(defaultValue);
   const [draft, setDraft] = useState<T>(defaultValue);
-  const [editing, setEditing] = useState(false);
+  const [editing, _setEditing] = useState(false);
+  const editingRef = useRef(false);
+  const setEditing = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+    _setEditing((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      editingRef.current = next;
+      return next;
+    });
+  }, []);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [pageLoading, setPageLoading] = useState(true);
@@ -33,25 +41,31 @@ export function useSettingsForm<T>(
       const stored = localStorage.getItem(storageKey);
       if (stored == null) {
         setSaved(defaultValue);
-        setDraft(defaultValue);
+        if (!editingRef.current) {
+          setDraft(defaultValue);
+        }
         return;
       }
 
       const data = JSON.parse(stored) as T;
       setSaved(data);
-      setDraft(data);
+      if (!editingRef.current) {
+        setDraft(data);
+      }
     } catch (error) {
       logger.error("Failed to load saved settings from localStorage", {
         storageKey,
         error,
       });
       setSaved(defaultValue);
-      setDraft(defaultValue);
+      if (!editingRef.current) {
+        setDraft(defaultValue);
+      }
     }
   }, [defaultValue, storageKey]);
 
   useStorageSync(storageKey, () => {
-    if (!editing) {
+    if (!editingRef.current) {
       syncFromStorage();
     }
   });
@@ -77,7 +91,19 @@ export function useSettingsForm<T>(
       if (typeof window !== "undefined") {
         try {
           const EventCtor = window.Event || Event;
-          window.dispatchEvent(new EventCtor("storage"));
+          const storagePayload = {
+            key: storageKey,
+            newValue: JSON.stringify(draft),
+          };
+          let storageEvent: Event;
+          if (typeof window.StorageEvent === "function") {
+            storageEvent = new window.StorageEvent("storage", storagePayload);
+          } else if (typeof StorageEvent === "function") {
+            storageEvent = new StorageEvent("storage", storagePayload);
+          } else {
+            storageEvent = Object.assign(new EventCtor("storage"), storagePayload);
+          }
+          window.dispatchEvent(storageEvent);
           window.dispatchEvent(new EventCtor("notification-preferences-updated"));
         } catch {
           // ignore dispatch issues in non-standard test environments

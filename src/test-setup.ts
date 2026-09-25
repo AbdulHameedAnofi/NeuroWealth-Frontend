@@ -30,6 +30,7 @@ export function setupDomGlobals() {
   Object.defineProperty(globalThis, "HTMLElement", { value: dom.window.HTMLElement, writable: true, configurable: true });
   Object.defineProperty(globalThis, "Node", { value: dom.window.Node, writable: true, configurable: true });
   Object.defineProperty(globalThis, "localStorage", { value: dom.window.localStorage, writable: true, configurable: true });
+  Object.defineProperty(globalThis, "StorageEvent", { value: dom.window.StorageEvent, writable: true, configurable: true });
   Object.defineProperty(globalThis, "MutationObserver", {
     value: dom.window.MutationObserver ||
       class { observe() {} disconnect() {} takeRecords() { return []; } },

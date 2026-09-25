@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useEffect, useMemo } from "react";
+import React, { Fragment, useState, useEffect, useMemo } from "react";
 import { AuditEvent, getAuditService } from "@/lib/audit-service";
 import { Download, Filter, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
