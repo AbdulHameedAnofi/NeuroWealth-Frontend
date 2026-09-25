@@ -26,6 +26,7 @@ export interface TransactionAPIState {
     isSubmitting: boolean;
     recovery: TransactionRecoveryUI | null;
     lastErrorReference: string | null;
+    fieldErrors: TransactionFieldErrors;
 }
 
 export type QuoteResult =
@@ -42,6 +43,7 @@ const INITIAL_STATE: TransactionAPIState = {
     isSubmitting: false,
     recovery: null,
     lastErrorReference: null,
+    fieldErrors: {},
 };
 
 import { useI18n } from "@/contexts/I18nContext";
@@ -69,7 +71,12 @@ export function useTransactionAPI() {
             quoteReference?: string,
         ): Promise<QuoteResult> => {
             const controller = beginApiRequest();
-            setState((prev) => ({ ...prev, isSubmitting: true, recovery: null }));
+            setState((prev) => ({
+                ...prev,
+                isSubmitting: true,
+                recovery: null,
+                fieldErrors: {},
+            }));
 
             try {
                 const payload = await apiRequest<{ quote: TransactionQuote }>(
@@ -116,6 +123,7 @@ export function useTransactionAPI() {
                     isSubmitting: false,
                     recovery,
                     lastErrorReference: quoteReference ?? null,
+                    fieldErrors,
                 }));
 
                 return { status: "error", fieldErrors };
@@ -133,7 +141,12 @@ export function useTransactionAPI() {
             quoteReference?: string,
         ): Promise<SubmitResult> => {
             const controller = beginApiRequest();
-            setState((prev) => ({ ...prev, isSubmitting: true, recovery: null }));
+            setState((prev) => ({
+                ...prev,
+                isSubmitting: true,
+                recovery: null,
+                fieldErrors: {},
+            }));
 
             try {
                 const payload = await apiRequest<{ pending: PendingTransaction }>(
@@ -184,6 +197,7 @@ export function useTransactionAPI() {
                     isSubmitting: false,
                     recovery,
                     lastErrorReference: quoteReference ?? null,
+                    fieldErrors,
                 }));
 
                 return { status: "error", fieldErrors };

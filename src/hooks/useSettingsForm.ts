@@ -36,13 +36,20 @@ export function useSettingsForm<T>(
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [pageLoading, setPageLoading] = useState(true);
 
+  // Callers may pass an inline default object; keeping it in a ref stops a new
+  // identity on every render from re-running the initial load and clobbering
+  // an in-progress draft.
+  const defaultValueRef = useRef(defaultValue);
+  defaultValueRef.current = defaultValue;
+
   const syncFromStorage = useCallback(() => {
+    const fallback = defaultValueRef.current;
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored == null) {
-        setSaved(defaultValue);
+        setSaved(fallback);
         if (!editingRef.current) {
-          setDraft(defaultValue);
+          setDraft(fallback);
         }
         return;
       }
@@ -57,12 +64,12 @@ export function useSettingsForm<T>(
         storageKey,
         error,
       });
-      setSaved(defaultValue);
+      setSaved(fallback);
       if (!editingRef.current) {
-        setDraft(defaultValue);
+        setDraft(fallback);
       }
     }
-  }, [defaultValue, storageKey]);
+  }, [storageKey]);
 
   useStorageSync(storageKey, () => {
     if (!editingRef.current) {

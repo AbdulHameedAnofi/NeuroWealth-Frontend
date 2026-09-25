@@ -25,6 +25,7 @@ export function setupDomGlobals() {
   });
 
   Object.defineProperty(globalThis, "window", { value: dom.window, writable: true, configurable: true });
+  Object.defineProperty(globalThis, "self", { value: dom.window, writable: true, configurable: true });
   Object.defineProperty(globalThis, "document", { value: dom.window.document, writable: true, configurable: true });
   Object.defineProperty(globalThis, "navigator", { value: dom.window.navigator, writable: true, configurable: true });
   Object.defineProperty(globalThis, "HTMLElement", { value: dom.window.HTMLElement, writable: true, configurable: true });

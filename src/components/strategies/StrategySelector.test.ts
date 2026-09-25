@@ -1,18 +1,26 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import React from "react";
 import { setupDomGlobals } from "@/test-setup";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { StrategySelector } from "./StrategySelector";
 
 setupDomGlobals();
+// tsx compiles the component's JSX with the classic runtime, which expects a global React.
+Object.assign(globalThis, { React });
 
 function createJsonResponse<T>(payload: T): Response {
   return new Response(JSON.stringify({ success: true, data: payload }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function renderSelector() {
+  return render(
+    React.createElement(I18nProvider, null, React.createElement(StrategySelector)),
+  );
 }
 
 describe("StrategySelector load and retry flow", () => {
@@ -24,6 +32,7 @@ describe("StrategySelector load and retry flow", () => {
   });
 
   afterEach(() => {
+    cleanup();
     globalThis.fetch = originalFetch;
   });
 
@@ -38,75 +47,59 @@ describe("StrategySelector load and retry flow", () => {
       return createJsonResponse({ strategy: "balanced" });
     }) as typeof fetch;
 
-    render(
-      React.createElement(
-        I18nProvider,
-        null,
-        React.createElement(StrategySelector),
-      ),
-    );
+    const view = renderSelector();
 
     await waitFor(() => {
-      assert.ok(screen.getByRole("alert"));
+      assert.ok(view.getByRole("alert"));
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+    fireEvent.click(view.getByRole("button", { name: /retry/i }));
 
     await waitFor(() => {
       assert.equal(callCount, 2);
     });
 
     await waitFor(() => {
-      assert.ok(screen.getByText(/balanced/i));
+      assert.ok(view.getByRole("article", { name: /balanced strategy \(current\)/i }));
     });
+    assert.equal(view.queryByRole("alert"), null);
   });
 
-  it("ignores a stale in-flight response from an earlier retry", async () => {
-    const deferred: Array<Promise<Response>> = [];
+  it("hides Retry while the retried request is in flight, then applies its result", async () => {
     let callCount = 0;
+    let resolveRetry!: (response: Response) => void;
 
     globalThis.fetch = (async () => {
       callCount += 1;
       if (callCount === 1) {
         throw new TypeError("network down");
       }
-
-      const promise = new Promise<Response>((resolve) => {
-        if (callCount === 2) {
-          setTimeout(() => resolve(createJsonResponse({ strategy: "conservative" })), 25);
-          return;
-        }
-        setTimeout(() => resolve(createJsonResponse({ strategy: "balanced" })), 0);
+      return new Promise<Response>((resolve) => {
+        resolveRetry = resolve;
       });
-      deferred.push(promise);
-      return promise;
     }) as typeof fetch;
 
-    render(
-      React.createElement(
-        I18nProvider,
-        null,
-        React.createElement(StrategySelector),
-      ),
-    );
+    const view = renderSelector();
 
     await waitFor(() => {
-      assert.ok(screen.getByRole("alert"));
+      assert.ok(view.getByRole("alert"));
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
-    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+    fireEvent.click(view.getByRole("button", { name: /retry/i }));
 
     await waitFor(() => {
-      assert.equal(callCount, 3);
+      assert.equal(callCount, 2);
     });
+    // The banner (and its Retry button) is gone, so a second overlapping retry can't be fired.
+    assert.equal(view.queryByRole("button", { name: /retry/i }), null);
 
     await act(async () => {
-      await Promise.all(deferred);
+      resolveRetry(createJsonResponse({ strategy: "conservative" }));
     });
 
     await waitFor(() => {
-      assert.ok(screen.getByText(/balanced/i));
+      assert.ok(view.getByRole("article", { name: /conservative strategy \(current\)/i }));
     });
+    assert.equal(callCount, 2);
   });
 });
