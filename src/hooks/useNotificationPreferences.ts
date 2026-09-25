@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { NotificationPreferences, DEFAULT_PREFERENCES } from "@/lib/mock-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStorageSync } from "@/hooks/useStorageSync";
@@ -55,18 +55,7 @@ export function useNotificationPreferences() {
 
   useStorageSync(NOTIFICATION_PREFERENCES_STORAGE_KEY, syncPreferences);
 
-  useEffect(() => {
-    const handleSync = () => {
-      setPreferences(readStoredPreferences());
-    };
 
-    window.addEventListener("storage", handleSync);
-    window.addEventListener("notification-preferences-updated", handleSync);
-    return () => {
-      window.removeEventListener("storage", handleSync);
-      window.removeEventListener("notification-preferences-updated", handleSync);
-    };
-  }, []);
 
   const updatePreference = (
     section: "categories" | "channels" | "emailDigest",
@@ -87,9 +76,16 @@ export function useNotificationPreferences() {
       );
       if (typeof window !== "undefined") {
         try {
-          const EventCtor = window.Event || Event;
-          window.dispatchEvent(new EventCtor("storage"));
-          window.dispatchEvent(new EventCtor("notification-preferences-updated"));
+          const serialized = JSON.stringify(updated);
+          const storageEvent =
+            typeof window.StorageEvent === "function"
+              ? new window.StorageEvent("storage", {
+                  key: NOTIFICATION_PREFERENCES_STORAGE_KEY,
+                  newValue: serialized,
+                })
+              : new window.Event("storage");
+          window.dispatchEvent(storageEvent);
+          window.dispatchEvent(new window.Event("notification-preferences-updated"));
         } catch {
           // ignore dispatch issues in non-standard test environments
         }
