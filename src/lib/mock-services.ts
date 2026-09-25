@@ -221,7 +221,7 @@ export interface ProfileData {
 
 export const DEFAULT_PROFILE: ProfileData = {
   displayName: "",
-  locale: "en-US",
+  locale: "en",
   timezone: "UTC",
   currencyFormat: "USD",
 };
